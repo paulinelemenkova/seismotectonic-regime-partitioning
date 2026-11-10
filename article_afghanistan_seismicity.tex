@@ -1,0 +1,1595 @@
+% article_afghanistan_seismicity.tex
+% Destructive crustal earthquakes beyond the Hindu Kush nest (Afghanistan).
+% Submission version for Geofisica Internacional.
+% Compile: pdflatex; bibtex; pdflatex; pdflatex.
+
+
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\graphicspath{{figures/}{./}}   % MANDATORY; \includegraphics takes bare content names
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{siunitx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{geometry}\geometry{margin=2.5cm}
+\usepackage{authblk}
+\usepackage[colorlinks=true,allcolors=blue]{hyperref}
+\usepackage{cleveref}
+
+\lstdefinestyle{py}{language=Python,basicstyle=\ttfamily\footnotesize,
+  breaklines=true,frame=single,numbers=left,numberstyle=\tiny,
+  keywordstyle=\color{blue},commentstyle=\color{gray},showstringspaces=false}
+\lstdefinestyle{sh}{language=bash,basicstyle=\ttfamily\footnotesize,
+  breaklines=true,frame=single,numbers=left,numberstyle=\tiny,
+  keywordstyle=\color{blue},commentstyle=\color{gray},showstringspaces=false}
+\lstset{style=py}
+
+\title{Destructive Crustal Earthquakes Beyond the Hindu Kush Nest: Statistical
+Seismicity Regimes, Strain and Fault Structure of Afghanistan}
+
+\author[1]{Polina Lemenkova\thanks{Corresponding author:
+\href{mailto:lemenkova@itu.edu.tr}{lemenkova@itu.edu.tr};
+ORCID: \url{https://orcid.org/0000-0002-5759-1089}}}
+\author[1]{Abdullah Can Z\"{u}lfikar\thanks{ORCID:
+\url{https://orcid.org/0000-0001-6610-3334}}}
+\affil[1]{Disaster and Emergency Management Department, Institute of Earthquake
+Engineering and Disaster Management, Istanbul Technical University, Maslak,
+34469 Istanbul, T\"{u}rkiye}
+\date{}
+
+\begin{document}
+\maketitle
+
+% ===========================================================================
+\begin{abstract}
+\noindent
+Afghanistan lies at the junction of the India--Eurasia collision, the Chaman
+transform boundary and the Makran subduction system, and it suffers recurrent
+lethal earthquakes. Seismic hazard studies of the country have concentrated on the
+intermediate-depth Hindu Kush nest. However, the destructive events of 2022, 2023
+and 2025 were shallow crustal earthquakes in the plate-boundary zone and in the
+slowly deforming interior. This study compares the statistical seismicity regimes of
+the intermediate-depth, plate-boundary and interior crustal domains of Afghanistan.
+The workflow applies declustering and unsupervised clustering to open earthquake
+catalogues for 1900--2025. It then derives frequency--magnitude statistics,
+focal-mechanism classes and Kostrov strain rates in Python, with maps produced in
+the Generic Mapping Tools. The merged catalogue holds
+13\,777 events of moment magnitude 4 and above, of which 45\,\% are deeper than
+70\,km. Above $M_w$ 5.5, the b-value is 0.69 in the western interior, 0.97 in the
+intermediate-depth zone and 1.33--1.38 in the north-eastern crust and the
+plate-boundary zone. The crustal domains released 55\,\% of the seismic moment
+since 1900. They also hosted every destructive earthquake of 2022--2025. The results provide the first reproducible, nationwide statistical
+regionalisation of Afghan seismicity linked to the mapped fault structure.
+They give the Afghanistan National Disaster Management Authority a basis for
+hazard zoning that separates shallow crustal sources beneath populated valleys
+from the deep Hindu Kush nest.
+\end{abstract}
+
+\noindent\textbf{Keywords:} Afghanistan; Hindu Kush; Chaman fault; seismicity;
+b-value; Kostrov strain; focal mechanisms; GMT
+
+% ===========================================================================
+\section{Introduction}\label{sec:intro}
+
+Earthquakes cause a disproportionate share of disaster fatalities in countries where
+rapid population growth meets fragile building stock and limited preparedness
+\cite{Bilham2009, Holzer2013, Ambraseys2011, Jaiswal2010}. Afghanistan is a severe
+example of this combination. Its historical record documents repeated destruction of
+towns and villages in the Hindu Kush, the Kabul basin and the Herat region, and
+unreinforced adobe and stone dwellings remain the dominant housing type
+\cite{Ambraseys2003, Akhundzadah2025}. Global risk models identify the continental interiors of the
+Alpine--Himalayan belt, including Afghanistan, as regions of high earthquake risk
+\cite{Silva2020, England2011}. The four destructive events of
+2022--2025 confirmed this assessment. The Herat sequence of October 2023 alone caused
+damage that required an international rapid damage estimation
+\cite{WorldBank2024}.
+
+The seismicity of Afghanistan is governed by the northward motion of the Indian and
+Arabian plates relative to Eurasia. This convergence drives crustal shortening,
+lateral extrusion and deep lithospheric subduction across south-central Asia
+\cite{Molnar1975, Tapponnier1982, Jackson1984, Bird2003}. Plate models predict
+India--Eurasia relative motion of about 40\,mm\,yr$^{-1}$ near Afghanistan, and
+geodetic networks show how this motion is partitioned between strike-slip and
+thrust structures \cite{DeMets1994, DeMets2010, Vernant2004, Mohadjer2010,
+Szeliga2012}. The country itself is a mosaic of Gondwana-derived blocks accreted to
+Eurasia along Mesozoic sutures that were later reactivated as the Herat and
+Central Badakhshan fault systems \cite{Tapponnier1981, Doebrich2006}. To the south
+and east, the Makran subduction zone, the Sulaiman fold belt and the Zagros
+fold-and-thrust belt frame the Afghan blocks and record the same convergence in
+contrasting structural styles \cite{Byrne1992, Walker2004, Lemenkova202015,
+Talebian2004, Jackson1988, Lemenkova202135, Vernant2004, Wheeler2005,
+Lemenkova202216, Ruleman2007, Szeliga2012}.
+
+\begin{figure}[htbp]\centering
+  \includegraphics[width=0.90\textwidth]{fig_tectonic_setting}
+  \caption{Regional tectonic setting of Afghanistan between 55--80$^\circ$E and
+  25--42$^\circ$N. Colour-shaded relief from the SRTM15+ grid is shown at full
+  intensity inside Afghanistan and faded outside it. Purple lines are PB2002 plate
+  boundaries and the dashed polygon is the PB2002 Persia--Tibet--Burma orogen.
+  Quaternary faults are coloured by kinematics (red, thrust or reverse; blue,
+  strike-slip; green, normal) and drawn with widths that increase with activity
+  class. Magenta circles are earthquakes of magnitude 4 and above deeper than
+  70\,km, 1900--2025 ($n = 6327$). Arrows give the velocities of the Indian and
+  Arabian plates relative to Eurasia computed from the PB2002 Euler poles. The inset
+  globe locates the map frame. Software used for plotting figure: GMT 6.6.0,
+  GhostScript 10.06.0. Data: SRTM15+; PB2002; USGS OFR 2007-1103; USGS ComCat;
+  GSHHG; DCW. Source: authors.}
+  \label{fig:tectonic}
+\end{figure}
+
+The principal active structures of Afghanistan respond to this convergence in
+distinct ways (\cref{fig:tectonic}). The left-lateral Chaman fault system
+accommodates a large part of the relative motion between India and Eurasia, and
+geodetic studies show that segments of it creep while others remain locked
+\cite{UlHadi2013, Fattahi2016, Barnhart2017, Dalaison2021}. Beneath the Hindu Kush,
+a steep slab of lithosphere produces one of the most active intermediate-depth
+earthquake nests on Earth, with large events at 150--250\,km depth
+\cite{Pegler1998, Pavlis2000, Sippl2013, Schneider2013}. The origin of this slab,
+its possible detachment and the mechanics of its earthquakes have been investigated
+through seismic tomography, moment-tensor analysis and thermal modelling
+\cite{Lister2008, Kufner2016, Kufner2017, Zhan2016, Poli2016, Molnar2019, Lou2009}.
+In contrast, the right-lateral Herat fault and the fold-and-thrust belts along the
+northern margin of the Afghan blocks deform slowly and have produced few
+instrumentally recorded earthquakes \cite{Wheeler2005, Ruleman2007}.
+
+Earlier hazard assessments of Afghanistan relied on these catalogues and fault maps.
+The national probabilistic hazard map combined a seismotectonic synthesis, a
+regional earthquake catalogue and a database of Quaternary faults
+\cite{Boyd2007, Dewey2006, Wheeler2005, Ruleman2007}. Global programmes have since
+incorporated Afghanistan into harmonised hazard and active-fault models
+\cite{Giardini1999, Styron2020, Silva2020}, and recent reviews have emphasised the
+growing toll of Afghan earthquakes \cite{Akhundzadah2025}. Source studies of the
+recent destructive events have shown that the 2023 Herat sequence ruptured
+previously unmapped north-dipping blind thrusts at 8--14\,km depth in five
+successive mainshocks \cite{Zhao2025, Fu2025, Xu2025, Zhong2026, Toker2026}. The
+2022 Paktika earthquake produced strong ground motion and surface deformation along
+the plate-boundary zone \cite{Jahed2024}, and the 2015 Hindu Kush event damaged
+buildings across northern Pakistan despite its 231\,km focal depth
+\cite{Ismail2016}.
+
+These studies leave a quantitative gap. Seismicity in Afghanistan has been analysed
+either event by event or within continental-scale compilations. No study has yet
+compared the statistical behaviour of its distinct seismotectonic domains with a
+single, reproducible workflow. Catalogue-wide statistics are dominated by
+intermediate-depth events, mostly beneath the Hindu Kush, which supply nearly half
+of all recorded earthquakes but rarely produce lethal shaking. The shallow crustal domains that generated every lethal
+earthquake of 2022--2025 are, in contrast, sparsely sampled by the instrumental
+record. The historical record of damaging earthquakes shows this contrast clearly
+(\cref{fig:damaging}). The NOAA database lists 126 earthquakes with reported deaths
+in the region since 1900, and 45 of them affected Afghanistan \cite{NOAA_SigEQ}.
+Lethal shaking in Afghanistan clusters in the north-east and along the eastern and
+western margins. Reported lethal events become markedly more frequent from the
+1990s onwards, which partly reflects improved reporting. Experience in slowly deforming continental interiors elsewhere shows that
+short catalogues can underrepresent the hazard of such regions, so that hazard maps
+built on them fail where they matter most \cite{Stein2012, Liu2016, Calais2016,
+England2011}.
+
+Domain-resolved statistics are needed to direct risk reduction in Afghanistan,
+where national disaster management depends on hazard zonation that reflects the
+types of earthquake each region produces. Machine-learning tools meet this need.
+They partition seismic catalogues objectively and have already improved the
+characterisation of earthquake clusters and seismic hazard in other collision zones \cite{Bergen2019, Kong2018, Lemenkova202606, Mousavi2022,
+Zaliapin2016}. Their combination with classical statistical seismology and
+open-source cartography offers a transparent route to a nationwide comparison that
+partner institutions in Afghanistan can reproduce and extend.
+
+This study aims to quantify and compare the statistical seismicity regimes of the
+intermediate-depth, plate-boundary and interior crustal domains of Afghanistan using
+open data only. The contributions are:
+\begin{itemize}
+  \item a merged, magnitude-homogenised and declustered open catalogue of
+        Afghanistan and its margins for 1900--2025;
+  \item a data-driven delineation of seismotectonic domains by unsupervised
+        density-based clustering of hypocentres;
+  \item domain-resolved completeness magnitudes, b-values, depth distributions and
+        recurrence estimates with bootstrap uncertainties;
+  \item focal-mechanism classification and seismic strain-rate fields from Kostrov
+        summation of moment tensors;
+  \item a quantitative comparison of mapped fault structure with the spatial
+        distribution of seismicity;
+  \item a series of reproducible maps produced with the Generic Mapping Tools and
+        openly released scripts.
+\end{itemize}
+\Cref{sec:studyarea} describes the tectonic setting, \cref{sec:data} the open
+datasets and \cref{sec:methods} the methodology. \Cref{sec:results} reports the
+results, which are interpreted in \cref{sec:discussion} and summarised in
+\cref{sec:conclusions}.
+
+\begin{figure}[htbp]\centering
+  \includegraphics[width=0.72\textwidth]{fig_damaging_events}
+  \caption{Damaging earthquakes in Afghanistan and adjacent regions, 1900--2025.
+  (a)~Epicentres of 205 significant earthquakes in 58--76\,$^\circ$E,
+  27--41\,$^\circ$N on a shaded-relief base, sized by magnitude and coloured by
+  reported fatalities. Labels give the year and death toll of the most lethal events
+  and of the recent Afghan sequence. (b)~Fatalities per event for the 126
+  earthquakes with reported deaths on a logarithmic axis. The 45 events that affected
+  Afghanistan are shown as opaque outlined bars and the events in neighbouring
+  countries as translucent bars. Software used for plotting figure: GMT 6.6.0.
+  Data: NOAA NCEI/WDS Global Significant Earthquake Database \cite{NOAA_SigEQ};
+  SRTM15+ relief. Source: authors.}
+  \label{fig:damaging}
+\end{figure}
+
+% ===========================================================================
+\section{Study Area and Tectonic Setting}\label{sec:studyarea}
+
+Afghanistan covers about 652\,000\,km$^2$. It extends from 29.4 to 38.5 degrees
+north and from 60.5 to 74.9 degrees east. Its relief rises from the Helmand and
+Sistan basins in the south-west, at about 500\,m, to peaks above 7000\,m in the
+eastern Hindu Kush and the Wakhan corridor (\cref{fig:geology}). The northern
+plains of the Amu Darya basin form the foreland of the Afghan--Tajik depression,
+whereas the south-eastern ranges pass into the Sulaiman and Kirthar fold belts of
+Pakistan \cite{Tapponnier1981, Doebrich2006}. This framework defines
+three settings: the high mountains of the north-east, the transpressional
+plate-boundary zone of the east and the plateau and basins of the centre and west.
+
+Geologically, the country comprises the Eurasian margin north of the Herat fault,
+the Farah, Helmand and Kabul blocks to the south, and the Katawaz flysch basin
+adjacent to the Chaman fault \cite{Tapponnier1981, Doebrich2006, Wheeler2005}. These
+units were assembled along Mesozoic sutures, which were reactivated during the
+Cenozoic as major strike-slip and thrust faults. The Herat fault extends for about
+700\,km from the Iranian border to its junction with the Chaman fault north of
+Kabul \cite{Zhao2025, Ruleman2007}. Foreland basins on the margins of the
+collision system record the same convergence far from the plate boundary. The
+Mesopotamian foredeep of Iraq is one example, shaped by sedimentary loading and
+flexure \cite{Jackson1984, Talebian2004, Lemenkova202132, Vernant2004,
+Walker2004}.
+
+Historical earthquakes reveal damaging activity in all three settings. Large
+shallow events struck Herat in AD\,847, 1102 and 1364 and the Bamyan region in
+1950, and earthquakes along the Chaman and Kabul fault systems repeatedly damaged
+Kabul and Jalalabad \cite{Ambraseys2003, Zhao2025}. Intermediate-depth events of
+magnitude 7 and above beneath the Hindu Kush recur at intervals of years to decades
+and are felt over much of south-central Asia \cite{Dewey2006, Pegler1998,
+Zhan2016}. Having outlined this framework, the next section describes the open
+datasets used to characterise it quantitatively.
+
+\begin{figure}[htbp]\centering
+  \includegraphics[width=0.92\textwidth]{fig_geology_faults}
+  \caption{Geology and faults of Afghanistan. The 11\,202 polygons of the USGS
+  1:850\,000 geological map are grouped into ten chronostratigraphic classes in the
+  colours of the International Chronostratigraphic Chart and drawn semi-transparently
+  over SRTM15+ shaded relief. Thin dark lines are the 14\,885 mapped faults of the same
+  map, and thicker grey lines its 83 thrusts. Quaternary faults are coloured by
+  kinematics: reverse in crimson, strike-slip in black and normal in blue. Dashed
+  lines are provincial boundaries. Labels mark the principal cities, tectonic blocks
+  and the Herat and Chaman faults. Software used for plotting figure: GMT 6.6.0,
+  GDAL 3.12. Data: USGS geology and faults of Afghanistan \cite{Doebrich2006}; USGS
+  Quaternary faults \cite{Ruleman2007}; geoBoundaries \cite{Runfola2020}; SRTM15+.
+  Source: authors.}
+  \label{fig:geology}
+\end{figure}
+
+% ===========================================================================
+\section{Data and Materials}\label{sec:data}
+
+All data used in this study are open access and were retrieved from public
+repositories; no field data or restricted datasets were used (\cref{tab:data}).
+
+\subsection{Earthquake Catalogues}
+The primary catalogue is the Comprehensive Catalog of the United States Geological
+Survey (ComCat). It was queried for events of magnitude 4 and above between 1900
+and 2025 in the window 58--76$^\circ$E and 27--41$^\circ$N. ComCat merges contributions from
+global and regional agencies and underpins the catalogues used for national hazard
+models \cite{Mueller2018}. For the period before 1964 and for large events, the
+ISC-GEM catalogue provides relocated hypocentres and moment magnitudes derived with
+uniform procedures \cite{Storchak2013, DiGiacomo2018}. Its solutions were obtained
+through ComCat under the contributor codes \texttt{iscgem} and \texttt{iscgemsup},
+which yielded 2078 events in the study window. The bulletin of the
+International Seismological Centre and the relocated catalogue of Engdahl and
+colleagues are used to check hypocentral depths, which are critical for separating
+crustal from intermediate-depth events \cite{Bondar2011, Engdahl1998}.
+
+\subsection{Focal Mechanisms}
+Centroid moment tensors for 1976--2025 are taken from the Global Centroid Moment
+Tensor (GCMT) project, which provides full moment tensors for earthquakes of
+moment magnitude above about 5 worldwide \cite{Dziewonski1981, Ekstrom2012}. These
+solutions supply the faulting style, principal-axis orientations and scalar moments
+used in the mechanism and strain analyses.
+
+\subsection{Geological, Fault and Topographic Data}
+Geological units and mapped faults are taken from the digital geological and mineral
+resource map of Afghanistan at 1:850\,000, which contains 11\,202 lithological
+polygons and 14\,968 fault segments \cite{Doebrich2006}. Fault activity and
+kinematics are taken from the database of probable and possible Quaternary faults,
+which classifies 29\,619 segments into thrust, strike-slip and normal types and
+three activity classes \cite{Ruleman2007}. The GEM Global Active Faults Database
+provides a regional context beyond the national border \cite{Styron2020}. Plate
+boundaries and orogen outlines follow the PB2002 model \cite{Bird2003}. Topography
+is represented by the SRTM15+ grid at 15 and 30 arc-second resolution
+\cite{Tozer2019}. Coastlines, rivers and political borders come from the
+Global Self-consistent, Hierarchical, High-resolution Geography database (GSHHG)
+\cite{Wessel1996}. Administrative boundaries are taken from geoBoundaries
+\cite{Runfola2020}.
+
+\subsection{Damage and Fatality Records}
+Fatality and damage figures for historical and recent earthquakes are compiled from
+the published Afghan earthquake record and from post-event reports
+\cite{Ambraseys2003, WorldBank2024}. They serve only to identify destructive events
+and are not used in the statistical analysis.
+
+\begin{table}[htbp]\centering
+  \caption{Open-access datasets used in the study, with provider, coverage and
+  role in the analysis.}
+  \label{tab:data}
+  \small
+  \begin{tabular}{p{3.4cm}p{3.6cm}p{3.0cm}p{4.2cm}}
+    \toprule
+    Dataset & Provider / version & Coverage & Role \\
+    \midrule
+    ComCat earthquake catalogue & USGS, accessed Nov 2026 & 1900--2025, M$\geq$4 & Primary catalogue \\
+    ISC-GEM catalogue & ISC, via ComCat & 1905--2021, 2078 events & Early and large events, $M_w$ \\
+    ISC Bulletin, EHB & ISC & 1964 onwards & Depth control \\
+    Global CMT & GCMT project & 1976--2025 & Focal mechanisms, moments \\
+    Geology and faults & USGS OFR 2006-1038 & 1:850\,000 & Lithology, fault density \\
+    Quaternary faults & USGS OFR 2007-1103 & 29\,619 segments & Fault kinematics, activity \\
+    PB2002 & Bird (2003) & Global & Plate boundaries \\
+    SRTM15+ & Tozer et al. (2019) & 15 and 30 arc-sec & Relief basemaps \\
+    GSHHG, geoBoundaries & Wessel and Smith; Runfola et al. & Global & Coasts, borders \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The assembled ComCat catalogue is summarised in \cref{fig:catalogue}, which shows
+the spatial separation between the dense intermediate-depth cluster beneath the
+Hindu Kush and the diffuse crustal seismicity elsewhere.
+
+\begin{figure}[htbp]\centering
+  \includegraphics[width=0.78\textwidth]{fig_catalogue_overview}
+  \caption{Instrumental seismicity of Afghanistan and its surroundings,
+  1900--2025. Circles mark 13\,779 earthquakes of magnitude 4 and above from the
+  USGS ComCat catalogue. They are coloured by hypocentral depth from 0 to 300\,km
+  and sized by magnitude, on a grey shaded-relief base from SRTM15+. Thin dark lines are
+  Quaternary faults and the bold line is the national border. Stars mark the
+  destructive earthquakes of Paktika (2022), Herat (2023), Kunar (2025) and Kholm
+  (2025), labelled with catalogue magnitudes. Panel (a) shows the depth histogram
+  in 10\,km bins and panel (b) the magnitude histogram in 0.1-unit bins, both on a
+  logarithmic count axis. Software used for plotting figure: GMT 6.6.0,
+  GhostScript 10.06.0. Data: USGS ComCat; USGS OFR 2007-1103; SRTM15+; GSHHG; DCW.
+  Source: authors.}
+  \label{fig:catalogue}
+\end{figure}
+
+These data are processed in five stages, described next.
+
+% ===========================================================================
+\section{Methodology}\label{sec:methods}
+
+\subsection{Methodological Framework}
+The workflow comprises five stages (\cref{fig:workflow}). The first stage merges the
+catalogues and converts all magnitudes to moment magnitude. The second removes
+dependent events, and the third delineates seismotectonic domains by unsupervised
+clustering. The fourth stage computes completeness, frequency--magnitude, depth,
+recurrence, mechanism and strain statistics for each domain. The fifth relates
+seismicity to the mapped fault structure and produces the maps. All computations
+use Python with NumPy, SciPy, pandas and scikit-learn
+\cite{Harris2020, Virtanen2020, McKinney2010, Pedregosa2011}; graphs are drawn with
+Matplotlib \cite{Hunter2007} and maps with the Generic Mapping Tools (GMT) version
+6.6 \cite{Wessel2019}.
+
+\begin{figure}[htbp]\centering
+  \includegraphics[width=0.95\textwidth]{fig_workflow}
+  \caption{Processing workflow. Open datasets (left) enter five stages: (1)
+  catalogue merging and magnitude homogenisation; (2) declustering; (3) unsupervised
+  delineation of seismotectonic domains; (4) statistical seismology, focal mechanisms
+  and strain; and (5) fault-structure metrics and cartography. The main product of
+  each stage is shown on the right, with the event counts of the final analysis.
+  Software used for plotting figure: Matplotlib 3.10. Source: authors.}
+  \label{fig:workflow}
+\end{figure}
+
+\subsection{Catalogue Homogenisation}
+The ISC-GEM solutions distributed through ComCat under the contributor codes
+\texttt{iscgem} and \texttt{iscgemsup} are merged with the ComCat catalogue. A
+ComCat event is replaced by the ISC-GEM solution when the two origins differ by no
+more than 16\,s and 50\,km. A second pass removes residual duplicates within the
+same tolerances. It retains the ISC-GEM solution or, between two ComCat entries,
+the larger event. Moment magnitudes of all types are retained. Body-wave ($m_b$) and
+surface-wave ($M_S$) magnitudes are converted to moment magnitude with the global
+relations of Scordilis \cite{Scordilis2006}. The conversion is checked against a
+regional general orthogonal regression of matched $m_b$--$M_w$ pairs, with an
+error-variance ratio of 0.2 \cite{Das2011}. Moment magnitude is linked to scalar
+seismic moment through the relation of Hanks and Kanamori \cite{Hanks1979,
+Kanamori1977}:
+\begin{equation}
+  M_0 = 10^{1.5 M_w + 9.1}, \label{eq:moment}
+\end{equation}
+where $M_0$ is the scalar seismic moment (N\,m) and $M_w$ is the moment magnitude.
+Moments computed with \cref{eq:moment} are summed to obtain cumulative moment
+release, which is dominated by the largest events in each domain \cite{Kagan2002}.
+Events at the default depths of 10, 33 and 35\,km are flagged, because their depths
+reflect location procedures rather than source depth.
+
+Converted magnitudes are used for mapping and for the delineation of domains but not
+for the frequency--magnitude analysis. A linear conversion with a slope below one
+compresses the magnitude range and changes the apparent b-value by the inverse of
+that slope, so that b-values from converted magnitudes depend on the conversion
+chosen. The frequency--magnitude statistics therefore use the period 1964--2025 and
+moment magnitudes of 5.5 and above, where nearly all events carry a directly
+determined moment magnitude (\cref{sec:results}). The merging, duplicate removal and
+magnitude conversion are implemented as shown in \cref{lst:catalogue}.
+
+\begin{lstlisting}[caption={Merging of the ISC-GEM and ComCat records, removal of
+duplicates within 16\,s and 50\,km and conversion of body-wave and surface-wave
+magnitudes to $M_w$ (Python 3, pandas, NumPy; excerpt of analysis.py).},
+label={lst:catalogue}]
+tcc = cc["time"].values.astype("datetime64[ms]").astype(np.int64) / 1000.0
+pairs, used = [], set()
+for _, g in gem.iterrows():                      # ISC-GEM has priority
+    j = np.where(np.abs(tcc - g["time"].value / 1e9) <= 16)[0]
+    if len(j):
+        dd = dist_km(g.latitude, g.longitude, cc.latitude.values[j],
+                     cc.longitude.values[j])
+        if dd.min() <= 50:
+            k = j[np.argmin(dd)]
+            used.add(k)
+            pairs.append((cc.loc[k, "mag"], cc.loc[k, "magType"], g["mag"]))
+gem["source"], rest = "ISC-GEM", cc.drop(index=list(used)).copy()
+rest["source"] = "ComCat"
+cat = pd.concat([gem, rest], ignore_index=True).sort_values("time")
+
+def to_mw(m, t, rel="scordilis"):
+    if t.startswith("mw"):
+        return m
+    if t in ("mb", "mblg", "mb_lg"):             # Scordilis (2006) or regional GOR
+        return 0.85 * m + 1.03 if rel == "scordilis" else beta * m + alpha
+    if t.startswith("ms"):
+        return 0.67 * m + 2.07 if m <= 6.1 else 0.99 * m + 0.08
+    return m
+
+cat["mw"] = np.round([to_mw(m, t) for m, t in zip(cat.mag, cat.magType)], 2)
+cat = cat[cat.mw >= 4.0].reset_index(drop=True)
+cat["fixed_depth"] = cat.depth.round(1).isin([10.0, 33.0, 35.0])
+\end{lstlisting}
+
+\subsection{Declustering}
+Aftershocks and foreshocks are removed because frequency--magnitude and recurrence
+statistics assume independent events. Two methods are compared. The window method
+of Gardner and Knopoff removes events within magnitude-dependent space--time windows
+around each mainshock \cite{Gardner1974}. Here the spatial window is applied to
+hypocentral rather than epicentral distance, so that crustal events above the Hindu
+Kush slab are not attributed to intermediate-depth mainshocks. The cluster method of
+Reasenberg \cite{Reasenberg1985} was not applied, because its interaction parameters
+are calibrated for dense regional networks rather than teleseismic catalogues. The
+nearest-neighbour method of Zaliapin and Ben-Zion uses the proximity of each event to
+its nearest earlier neighbour \cite{Zaliapin2008, Zaliapin2013, Zaliapin2016}:
+\begin{equation}
+  \eta_{ij} = t_{ij}\, r_{ij}^{\,d_f}\, 10^{-b\, m_i}, \label{eq:nnd}
+\end{equation}
+where $\eta_{ij}$ is the proximity of event $j$ to an earlier event $i$, $t_{ij}$ is
+the inter-event time (yr) and $r_{ij}$ is the hypocentral distance (km). The
+exponent $d_f$ is the fractal dimension of hypocentres (1.6), $b$ is the
+Gutenberg--Richter slope (1.0) and $m_i$ is the magnitude of the parent event. The
+distribution of $\log_{10}\eta$ is fitted with a two-component Gaussian mixture, and
+events below the point of equal membership probability are classified as clustered.
+The nearest-neighbour background catalogue is used in all subsequent analyses, and
+the Gardner--Knopoff catalogue serves as a sensitivity test.
+
+\subsection{Data-Driven Delineation of Seismotectonic Domains}
+Seismotectonic domains are delineated by density-based clustering rather than drawn
+by hand. The algorithm HDBSCAN extends DBSCAN by building a hierarchy of clusters
+across density levels and retaining the most persistent ones. It therefore requires
+no fixed density threshold and labels sparse events as noise
+\cite{Ester1996, Campello2013, McInnes2017}. Each background event is described by
+its projected easting and northing (km) and its depth multiplied by three, a weight
+that separates crustal from intermediate-depth seismicity in the same epicentral
+area. The minimum cluster size is 80 events and the minimum number of samples is 20
+(\cref{lst:clustering} in Appendix~\ref{secA1}).
+Similar density-based approaches have been used to reconstruct fault networks from
+seismicity \cite{Ouillon2008}.
+
+The clusters are grouped into four domains by simple rules applied to their median
+location. Clusters with a median depth of 70\,km or more form
+the Hindu Kush--Pamir intermediate-depth zone (HKP). Crustal clusters with a median
+longitude west of 64.5$^\circ$E form the western interior domain (WEST). Crustal
+clusters south of 35.2$^\circ$N, or east of 72.5$^\circ$E and south of 36$^\circ$N,
+form the plate-boundary domain (PBZ), and the remaining crustal clusters form the
+north-eastern crustal domain (NEC). Every event of the catalogue, including those
+labelled as noise or as clustered, is then assigned to a domain by a
+nearest-neighbour classifier with 15 neighbours trained on the clustered events
+\cite{Pedregosa2011}.
+
+
+\subsection{Magnitude of Completeness and b-Value Estimation}
+The magnitude of completeness $M_c$ is estimated by the maximum-curvature method with
+a correction of $+0.2$ \cite{Wiemer2000, Woessner2005}. Its temporal evolution is
+traced in moving windows of 400 events with bootstrap uncertainties. For the
+frequency--magnitude analysis of moment magnitudes, $M_c$ is set to 5.5 for the
+period 1964--2025 after checking the maximum-curvature estimate of the directly
+determined moment magnitudes in each domain. The frequency--magnitude distribution
+above $M_c$ follows the Gutenberg--Richter law \cite{Gutenberg1944}:
+\begin{equation}
+  \log_{10} N(\geq M) = a - b\,M, \label{eq:gr}
+\end{equation}
+where $N(\geq M)$ is the number of events with magnitude at least $M$, $a$ measures
+seismic productivity and $b$ describes the relative frequency of small and large
+events. The b-value is estimated by maximum likelihood \cite{Aki1965}:
+\begin{equation}
+  \hat{b} = \frac{\log_{10} e}{\bar{M} - \left(M_c - \Delta M/2\right)},
+  \label{eq:aki}
+\end{equation}
+where $\bar{M}$ is the mean magnitude of events at or above $M_c$ and $\Delta M$ is
+the magnitude bin width (0.1). Its standard error follows Shi and Bolt
+\cite{Shi1982}:
+\begin{equation}
+  \sigma_b = 2.3\,\hat{b}^{2}\sqrt{\frac{\sum_{i=1}^{n}(M_i-\bar{M})^2}{n(n-1)}},
+  \label{eq:shibolt}
+\end{equation}
+where $n$ is the number of events at or above $M_c$ and $M_i$ their magnitudes.
+Confidence intervals are obtained from 1000 bootstrap resamples. Because the b-value
+decreases with increasing differential stress, its variations between domains are
+used as a proxy for their stress state \cite{Scholz1968, Schorlemmer2005,
+Scholz2015}. Gridded b-values are computed from the nearest events to each grid node
+(\cref{alg:bgrid}). Moment magnitudes are too sparse for spatial mapping, so the grid
+uses the native body-wave magnitudes of the declustered catalogue for 1973--2025,
+which make up 85\,\% of all events. Converting $m_b$ to $M_w$ with a slope of 0.85
+would multiply every node value by the same factor and leave the spatial pattern
+unchanged. The gridded values are therefore read as relative contrasts, and absolute
+b-values are taken from the $M_w$ domain estimates. Crustal ($<70$\,km) and
+intermediate-depth ($\geq 70$\,km) events are mapped separately at nodes spaced
+0.25\textdegree\ apart, with $N = 150$, $R_{max} = 150$\,km and $n_{min} = 50$
+(\cref{lst:bvalue}).
+
+\begin{lstlisting}[caption={Completeness by maximum curvature, Aki--Utsu b-value and
+Shi--Bolt standard error, applied per domain and per grid node (Python 3, NumPy).},
+label={lst:bvalue}]
+DM, NMIN = 0.1, 50                       # bin width, minimum events above Mc
+
+def mc_maxc(m):
+    bins = np.round(np.arange(m.min(), m.max() + DM, DM), 1)
+    h = np.array([(m == b).sum() for b in bins])
+    return float(bins[np.argmax(h)]) + 0.2  # maximum curvature + 0.2
+
+def bfit(m, mc):
+    x = m[m >= mc - 1e-9]
+    n = len(x)
+    if n < NMIN:
+        return None
+    mean = x.mean()
+    b = np.log10(np.e) / (mean - (mc - DM / 2))       # Aki-Utsu
+    sb = 2.3 * b**2 * np.sqrt(((x - mean)**2).sum() / (n * (n - 1)))  # Shi-Bolt
+    return b, sb, n
+\end{lstlisting}
+
+\begin{algorithm}[htbp]
+\caption{Gridded b-value mapping with nearest-$N$ sampling.}\label{alg:bgrid}
+\begin{algorithmic}[1]
+\State {select the nearest $N$ events within radius $R_{max}$ of each grid node}
+\State {estimate $M_c$, $\hat{b}$ and $\sigma_b$ from the selected events}
+\State {mask the node if fewer than $n_{min}$ events exceed $M_c$}
+\State {write node values to a GMT grid for mapping}
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Depth Distribution and Recurrence}
+Hypocentral depths are summarised per domain by percentiles and kernel-density
+estimates after excluding events at default depths. The bimodality of
+intermediate-depth seismicity is quantified with a two-component Gaussian mixture
+\cite{Pedregosa2011}. Recurrence is expressed as a Poisson probability. For each
+domain, the probability of at least one event of magnitude $M$ or larger within
+time $T$ is
+\begin{equation}
+  P(\geq M, T) = 1 - \exp\!\left(-10^{\,a - bM}\, T / T_{c}\right), \label{eq:poisson}
+\end{equation}
+where $T$ is the exposure time (yr) and $T_c = 62$\,yr is the duration of the
+1964--2025 window used to estimate $a$ and $b$. The return period is the inverse of
+the annual rate $10^{a-bM}/T_c$. Modelled return periods of $M_w \geq 7$ events are
+compared with the observed numbers of such events in 1900--2025.
+
+\subsection{Focal Mechanisms, Stress and Kostrov Strain}
+Focal mechanisms are classified into thrust, strike-slip, normal and oblique types by
+the plunges of their principal axes and displayed on ternary diagrams
+\cite{Frohlich1992}. An event is a thrust when its T-axis plunge is at least
+50\textdegree. It is a normal event when its P-axis plunge is at least 60\textdegree\
+and a strike-slip event when its B-axis plunge is at least 60\textdegree. All other
+events are oblique. Each Global CMT event is assigned to a domain by the same k-nearest-neighbour
+classifier used for the catalogue (\cref{sec:methods}). The mean P axis of a domain is
+the principal eigenvector of the summed orientation tensor of its P axes, which treats
+the axes as undirected lines. The share of variance carried by this eigenvector
+measures how tightly the axes cluster.
+Seismic strain rates follow from the summation of moment tensors in each domain or
+grid cell \cite{Kostrov1974, Jackson1988}:
+\begin{equation}
+  \dot{\varepsilon}_{ij} = \frac{1}{2\mu V T}\sum_{k=1}^{K} M_{ij}^{(k)},
+  \label{eq:kostrov}
+\end{equation}
+where $\dot{\varepsilon}_{ij}$ is the strain-rate tensor (yr$^{-1}$) and $\mu$ is the
+shear modulus ($3\times10^{10}$\,Pa). $V$ is the seismogenic volume (m$^3$), $T$ is
+the catalogue duration (yr) and $M_{ij}^{(k)}$ is the moment tensor of event $k$
+(N\,m). The summation uses the horizontal components of the Global CMT tensors for
+1976--2025 ($T = 50$\,yr). Shallow events ($\le 70$\,km) are summed in
+1\textdegree$\times$1\textdegree\ cells over a 30\,km seismogenic layer.
+Intermediate-depth events (70--300\,km) of the Hindu Kush--Pamir zone are summed in
+0.5\textdegree$\times$0.5\textdegree\ cells over a 230\,km layer. Only cells with
+at least three events are retained (\cref{lst:kostrov}). Absolute rates scale inversely with the assumed
+layer thickness, whereas the principal directions do not depend on it. The
+eigenvectors of $\dot{\varepsilon}_{ij}$ give the principal shortening and extension
+directions, which are compared with the geodetic velocity field
+\cite{Mohadjer2010, Szeliga2012}. The horizontal scalar strain rate
+$(\dot{\varepsilon}_{EE}^2 + \dot{\varepsilon}_{NN}^2 +
+2\dot{\varepsilon}_{EN}^2)^{1/2}$ summarises the intensity of deformation in each
+cell.
+
+\begin{lstlisting}[caption={Kostrov summation of Global CMT moment tensors in one
+grid cell, returning the principal horizontal strain rates, the azimuth of the
+shortening axis and the scalar strain rate (Python 3, standard library).},label={lst:kostrov}]
+def kostrov(events, lon0, lat0, d, H, mu=3.0e10, T=50.0, nmin=3):
+    """Horizontal Kostrov strain rate (1/yr) in one d x d degree cell.
+    events: (lon, lat, Mee, Mnn, Men) in N m; H: layer thickness in km."""
+    s = [e for e in events if lon0 <= e[0] < lon0 + d and lat0 <= e[1] < lat0 + d]
+    if len(s) < nmin:
+        return None
+    R = 6371.0e3
+    area = R**2 * math.radians(d) * (math.sin(math.radians(lat0 + d))
+                                     - math.sin(math.radians(lat0)))
+    k = 1.0 / (2.0 * mu * area * H * 1e3 * T)
+    ee, nn, en = (k * sum(e[q] for e in s) for q in (2, 3, 4))
+    mean = 0.5 * (ee + nn)
+    rad = math.hypot(0.5 * (ee - nn), en)
+    e1, e2 = mean + rad, mean - rad                 # extension positive
+    theta = 0.5 * math.degrees(math.atan2(2.0 * en, ee - nn))
+    az_e2 = (180.0 - theta) % 180.0                 # azimuth of shortening axis
+    scalar = math.sqrt(ee**2 + nn**2 + 2.0 * en**2)
+    return e1, e2, az_e2, scalar
+\end{lstlisting}
+
+\subsection{Fault-Structure Metrics}
+Fault density is gridded from the 14\,968 mapped fault segments:
+\begin{equation}
+  \rho_f(\mathbf{x}) = \frac{1}{A}\sum_{l \in A(\mathbf{x})} L_l, \label{eq:faultdens}
+\end{equation}
+Here $\rho_f$ is the fault density (km\,km$^{-2}$) and $A$ is the cell area (km$^2$).
+$L_l$ is the length (km) of segment $l$ within the cell centred on $\mathbf{x}$; cells
+are 0.25\textdegree\ wide. Fault strikes are summarised as length-weighted rose
+diagrams in 10\textdegree\ sectors and compared with the nodal-plane strikes of
+shallow Global CMT mechanisms. The distance from each shallow ($<40$\,km) epicentre
+inside Afghanistan to the nearest Quaternary fault is compared with that of five
+times as many uniformly random points inside the country. Faults are densified to
+vertices at most 0.5\,km apart, and the two distance distributions are compared with
+a two-sample Kolmogorov--Smirnov test to determine whether seismicity concentrates
+near mapped active faults \cite{Ruleman2007, Styron2020}. The gridding and the
+distance test are listed in \cref{lst:faults}.
+
+\subsection{Cartographic Mapping}
+All maps are produced with GMT scripts in Mercator projection, with shaded relief
+from SRTM15+ and coastlines and borders from GSHHG. Depth and gridded statistics use
+high-contrast continuous palettes (turbo and jet) over grey relief, each with a
+labelled colour bar, and categorical classes combine distinct colours with distinct
+symbols or outlines so that they remain separable in greyscale \cite{Crameri2020}. Hypocentres are coloured by depth and sized by magnitude, focal
+mechanisms are drawn as lower-hemisphere projections, and gridded statistics are
+rendered as continuous surfaces with masked low-data nodes. The scripts for the
+seismicity map, the depth sections and the focal mechanisms are given in
+\cref{lst:seismap,lst:sections,lst:meca}. The same scripted
+approach has been applied by the authors to seismicity and geophysical mapping of
+other active margins and rift systems, which ensures consistent cartographic
+conventions across regions \cite{Wessel2019, Wessel1996, Lemenkova202218,
+Tozer2019, Runfola2020, Lemenkova202205, Hunter2007, Harris2020, Lemenkova202215,
+Virtanen2020, McKinney2010}. Subduction-related and rift-related settings mapped
+with these tools provide structural analogues for the Makran and Hindu Kush
+margins \cite{Talebian2004, Jackson1988, Lemenkova202127, Frohlich1992,
+Ekstrom2012, Lemenkova202104, Dziewonski1981, Bird2003, Lemenkova202220,
+Styron2020, Kagan2002}.
+
+\subsection{Statistical Analysis and Uncertainty}
+Differences in b-value between domains are expressed as the share of paired bootstrap
+draws in which one domain exceeds the other \cite{Shi1982, Woessner2005}. All
+b-values, return periods and recurrence probabilities are reported with bootstrap
+95\,\% intervals. Sensitivity is assessed by repeating the b-value estimation for
+the undeclustered and Gardner--Knopoff catalogues, for catalogues without
+default-depth events, for completeness magnitudes of 5.3 and 5.8, and for the
+converted catalogue with the Scordilis and regional conversions (\cref{tab:params}).
+Depth distributions are compared with two-sample Kolmogorov--Smirnov tests
+\cite{Virtanen2020}.
+
+\begin{table}[htbp]\centering
+  \caption{Parameters of catalogue merging, declustering, clustering, completeness
+  and b-value estimation.}
+  \label{tab:params}
+  \small
+  \begin{tabular}{p{3.6cm}p{5.6cm}p{4.2cm}}
+    \toprule
+    Step & Parameter & Value \\
+    \midrule
+    Merging & Time and distance tolerance & 16\,s, 50\,km \\
+    Conversion & $m_b \rightarrow M_w$ (Scordilis) & $0.85\,m_b + 1.03$ \\
+     & $M_S \rightarrow M_w$ (Scordilis) & $0.67\,M_S + 2.07$; $0.99\,M_S + 0.08$ \\
+    Gardner--Knopoff & Distance metric & hypocentral \\
+    Nearest neighbour & $d_f$, $b$, distance metric & 1.6, 1.0, hypocentral \\
+     & Threshold & two-component Gaussian mixture \\
+    HDBSCAN & Features & easting, northing, $3\times$depth (km) \\
+     & Minimum cluster size, minimum samples & 80, 20 \\
+    Domain assignment & Classifier & $k$-nearest neighbours, $k = 15$ \\
+    Completeness & Method; moving window & maximum curvature $+0.2$; 400 events \\
+    Frequency--magnitude & Window; $M_c$; bin width & 1964--2025; 5.5; 0.1 \\
+    Uncertainty & Bootstrap resamples & 1000 \\
+    Gridded b-value & Magnitude; window; node spacing & $m_b$; 1973--2025; 0.25\textdegree \\
+     & $N$, $R_{max}$, $n_{min}$ & 150, 150\,km, 50 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The results of these analyses are presented next, beginning with the properties of
+the merged catalogue.
+
+% ===========================================================================
+\section{Results}\label{sec:results}
+
+\subsection{Catalogue Composition and Completeness}
+The merged catalogue contains 13\,777 earthquakes of moment magnitude 4 and above.
+They span the years 1902 to 2025. Of these, 1845 solutions come from ISC-GEM and 11\,932 from
+ComCat; 1834 ISC-GEM events matched a ComCat origin, and a further 13 residual
+duplicates were removed. Converted magnitudes account for 11\,736 events (85.2\,\%),
+nearly all of them body-wave magnitudes. Default depths occur for 4481 events
+(32.5\,\%).
+
+The 761 matched pairs of ComCat body-wave and ISC-GEM moment magnitudes span $m_b$
+4.2--7.4. Their residuals with respect to the Scordilis conversion have a mean of
+$-0.02$ and a standard deviation of 0.17 magnitude units. The regional orthogonal
+regression gives $M_w = 0.92\,m_b + 0.66$, with a slope steeper than the global
+value of 0.85.
+
+The completeness magnitude of the converted catalogue decreases from 5.4 in the early
+1970s to 5.0 after 1976 and falls intermittently to 4.7--4.8 after 2013
+(\cref{fig:mc}a). Above $M_w$ 5.5, 96.7\,\% of the events since 1964 carry a directly
+determined moment magnitude, and the maximum-curvature completeness of these events
+is 5.3--5.4 in every domain. These values support $M_c = 5.5$ for the
+frequency--magnitude analysis.
+
+\begin{figure}[htbp]\centering
+  	\includegraphics[width=0.98\textwidth]{fig_completeness}
+  \caption{Completeness and declustering of the merged catalogue. (a) Magnitude of
+  completeness of the converted catalogue from the maximum-curvature method with a
+  $+0.2$ correction. It is computed in moving windows of 400 events advanced by 100
+  events and plotted at the window centre. The shaded band spans the 16th--84th
+  bootstrap percentiles, and the dashed line marks the completeness magnitude of
+  5.5 used for the moment-magnitude analysis. (b) Cumulative number of events in the
+  full catalogue, in the nearest-neighbour background catalogue and among the
+  Gardner--Knopoff mainshocks, 1900--2025. Software used for plotting figure:
+  Python 3.14, Matplotlib, pandas, NumPy. Data: USGS ComCat; ISC-GEM. Source:
+  authors.}
+  \label{fig:mc}
+\end{figure}
+
+The nearest-neighbour proximities form two modes at $\log_{10}\eta = -6.99$ and
+$-4.15$, separated at $-5.77$. The background catalogue retains 11\,391 events
+(82.7\,\%), whereas the Gardner--Knopoff windows retain 5064 mainshocks (36.8\,\%)
+(\cref{fig:mc}b).
+
+\subsection{Seismotectonic Domains}
+HDBSCAN identified 14 clusters among the 11\,391 background events and labelled
+5626 events as noise (\cref{fig:domains}). Six clusters lie at intermediate depth,
+with median depths of 107--208\,km beneath the Hindu Kush and 129\,km beneath the
+Pamir. Three crustal clusters lie in the north-east: the northern Pamir and Tajik
+depression (902 events), north-eastern Afghanistan around 69.3$^\circ$E (231
+events) and Badakhshan (392 events). In the last of these, 97\,\% of the events
+have the default depth of 33\,km. Three clusters form the plate-boundary domain: the
+Quetta--Sulaiman region (711 events), the Kabul--Kunar region (102 events) and the
+2005 Kashmir rupture zone (158 events). The western interior comprises clusters in
+eastern Iran (344 events) and at Gazli in Uzbekistan (122 events).
+
+\begin{figure}[htbp]\centering
+  \includegraphics[width=0.95\textwidth]{fig_domains}
+  \caption{Seismotectonic domains of Afghanistan and its surroundings. Circles mark
+  the 13\,777 earthquakes of the merged catalogue, coloured by domain (purple,
+  Hindu Kush--Pamir intermediate-depth zone; green, north-eastern crust; orange,
+  plate boundary; blue, western interior) and sized by moment magnitude. White
+  numbered circles mark the medians of the 14 HDBSCAN clusters of the
+  nearest-neighbour background catalogue. Thin dark lines are Quaternary faults,
+  the bold line is the national border and stars mark the destructive earthquakes
+  of 2022--2025. Software used for plotting figure: GMT 6.6.0, GhostScript 10.06.0,
+  scikit-learn. Data: USGS ComCat; ISC-GEM; USGS OFR 2007-1103; SRTM15+; GSHHG;
+  DCW. Source: authors.}
+  \label{fig:domains}
+\end{figure}
+
+After assignment of all events, the four domains contain 6104 (HKP), 4294 (NEC),
+2477 (PBZ) and 902 (WEST) events (\cref{tab:domains}). In HKP, 99.3\,\% of the events are deeper
+than 70\,km, and the domain contains 97.8\,\% of all such events; each crustal
+domain has fewer than 2.5\,\% of its events at these depths. The domains extend beyond the
+national border: WEST includes eastern Iran, NEC the Tajik depression and the
+Pamir, and PBZ the Sulaiman ranges and the Himalayan front of Pakistan. The 2022
+Paktika and 2025 Kunar earthquakes fall in PBZ, the 2023 Herat sequence in WEST and
+the 2025 Kholm earthquake in NEC.
+
+\begin{table}[htbp]\centering
+  \caption{Seismotectonic domains: number of events, events shallower than 70\,km,
+  depth percentiles (10th, 50th and 90th, default depths excluded), median
+  epicentre and share of the seismic moment released in 1900--2025.}
+  \label{tab:domains}
+  \small
+  \begin{tabular}{lrrccc}
+    \toprule
+    Domain & Events & $<$70\,km & Depth (km) & Median epicentre & Moment share \\
+    \midrule
+    HKP & 6104 & 43 & 96 / 152 / 222 & 36.53$^\circ$N, 71.13$^\circ$E & 45.3\,\% \\
+    NEC & 4294 & 4226 & 14 / 30 / 61 & 38.56$^\circ$N, 71.59$^\circ$E & 20.9\,\% \\
+    PBZ & 2477 & 2423 & 14 / 25 / 59 & 32.86$^\circ$N, 70.25$^\circ$E & 18.9\,\% \\
+    WEST & 902 & 888 & 10 / 15 / 59 & 34.37$^\circ$N, 60.40$^\circ$E & 14.9\,\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Frequency--Magnitude Statistics}
+Above $M_c = 5.5$ for 1964--2025, the declustered catalogue gives $b = 1.07 \pm 0.06$
+for the whole region (95\,\% interval 0.96--1.21, $n = 364$). The domains differ
+markedly (\cref{fig:fmd,tab:gr}). The western interior has the lowest value,
+$b = 0.69 \pm 0.11$ (0.53--0.96), followed by the intermediate-depth zone with
+$b = 0.97 \pm 0.07$ (0.84--1.12). The north-eastern crust and the plate boundary
+have the highest values, $1.33 \pm 0.16$ and $1.38 \pm 0.19$. In paired bootstrap
+draws, the b-value of WEST is lower than that of NEC and PBZ in more than 99.8\,\%
+of cases and lower than that of HKP in 95.9\,\%. The b-value of HKP is lower than
+those of NEC and PBZ in 99.4\,\% and 98.9\,\% of cases, whereas NEC and PBZ do not
+differ significantly.
+
+\begin{table}[htbp]\centering
+  \caption{Gutenberg--Richter parameters of the declustered catalogue for
+  $M_w \geq 5.5$, 1964--2025: number of events, share with directly determined
+  moment magnitude, $a$-value for the 62-year window, b-value with the Shi--Bolt
+  standard error, and bootstrap 95\,\% interval.}
+  \label{tab:gr}
+  \small
+  \begin{tabular}{lccccc}
+    \toprule
+    Domain & $n$ & Native $M_w$ & $a$ & $b \pm \sigma_b$ & 95\,\% interval \\
+    \midrule
+    HKP & 158 & 96.8\,\% & 7.54 & $0.97 \pm 0.07$ & 0.84--1.12 \\
+    NEC & 88 & 96.6\,\% & 9.27 & $1.33 \pm 0.16$ & 1.09--1.72 \\
+    PBZ & 82 & 95.1\,\% & 9.48 & $1.38 \pm 0.19$ & 1.08--1.78 \\
+    WEST & 36 & 100\,\% & 5.36 & $0.69 \pm 0.11$ & 0.53--0.96 \\
+    All & 364 & 96.7\,\% & 8.44 & $1.07 \pm 0.06$ & 0.96--1.21 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]\centering
+  \includegraphics[width=0.75\textwidth]{fig_fmd_domains}
+  \caption{Frequency--magnitude distributions of the four seismotectonic domains
+  for the declustered catalogue, 1964--2025. Markers give the annual rate of events
+  at or above each moment magnitude in 0.1-unit bins. Circles denote the Hindu
+  Kush--Pamir intermediate-depth zone, squares the north-eastern crust, triangles
+  the plate boundary and diamonds the western interior. Lines are maximum-likelihood Gutenberg--Richter fits
+  above the completeness magnitude of 5.5 (dotted line), with b-values and standard
+  errors in the legend. Rates below 5.5 include converted magnitudes. Software used
+  for plotting figure: Python 3.14, Matplotlib, NumPy. Data: USGS ComCat; ISC-GEM.
+  Source: authors.}
+  \label{fig:fmd}
+\end{figure}
+
+The gridded b-values resolve 756 crustal and 292 intermediate-depth nodes
+(\cref{fig:bmap}). Their standard errors are small, with a median $\sigma_b$ of 0.15
+for crustal and 0.14 for intermediate-depth nodes. The crustal map divides into three
+broad zones. Low values, with medians of 1.62 and 1.54, cover the Hindu Kush and
+Kabul block between 34.5\textdegree N and 38\textdegree N and the Himalayan front
+of Kashmir. Intermediate values, with a median of 1.87, characterise the Chaman and
+Sulaiman fold belts south of 32\textdegree N. High values, with a median of 2.29,
+cover the Afghan--Tajik depression and the Tien Shan foreland north of
+38\textdegree N, and a smaller high-b patch (median 2.20) lies between Kabul and
+Jalalabad. The intermediate-depth map shows the strongest contrast within the Hindu
+Kush slab. Nodes beneath its southern tip, between 34.5\textdegree N and
+35.6\textdegree N, have the lowest values of the whole grid, with a median of 1.15.
+The core of the nest has a median of 1.75 and its western flank a median of 2.04. The
+Pamir slab farther north-east has a median of 1.71. Because absolute values depend on
+the body-wave magnitude scale, these contrasts are interpreted relative to the median
+of each layer, which is 1.77 for the crust and 1.71 for the intermediate depths
+(\cref{fig:bmap}c).
+
+\begin{figure}[htbp]\centering
+  \includegraphics[width=0.62\textwidth]{fig_bvalue_map}
+  \caption{Gridded b-values of Afghanistan and its margins from body-wave magnitudes of
+  the declustered catalogue, 1973--2025. (a)~Crustal events ($<70$\,km);
+  (b)~intermediate-depth events ($\geq 70$\,km) of the Hindu Kush--Pamir zone, whose
+  extent is outlined by the dashed frame in (a). Each 0.25\textdegree\ node uses the
+  nearest 150 events within 150\,km, and nodes with fewer than 50 events above $M_c$
+  are left blank. Dashed contours show the Shi--Bolt standard error at intervals of
+  0.1, and black lines in (a) are USGS Quaternary faults. (c)~Distribution of node
+  b-values, with medians as dashed lines. Software used for plotting figure: GMT
+  6.6.0. Data: merged ComCat and ISC-GEM catalogue; USGS Quaternary faults
+  \cite{Ruleman2007}; SRTM15+. Source: authors.}
+  \label{fig:bmap}
+\end{figure}
+
+\subsection{Depth Structure}
+Of the 13\,777 events, 7580 (55.0\,\%) are shallower than 70\,km and 6197
+(45.0\,\%) are at 70\,km or deeper; only eight events exceed 300\,km
+(\cref{fig:catalogue}). The intermediate-depth population divides almost equally
+between 70--150\,km (3068 events) and 150--300\,km (3121 events). In the HKP domain,
+with default depths excluded, the 10th, 50th and 90th depth percentiles are 96, 152
+and 222\,km (\cref{fig:depth}). A two-component Gaussian mixture places 53\,\% of
+these hypocentres in a mode at $115 \pm 22$\,km and 47\,\% in a mode at
+$204 \pm 26$\,km. The crustal domains have median depths of 30\,km (NEC), 25\,km
+(PBZ) and 15\,km (WEST).
+
+Four depth sections show how this structure varies across the region
+(\cref{fig:sections}). They use the 9486 ComCat hypocentres with depths other than the
+default values, within 50\,km of each line. Section A--A$'$ crosses the Hindu Kush
+from north to south and contains 3699 hypocentres. Crustal events above 60\,km occur
+along its whole length, whereas intermediate-depth events are confined to a zone about
+150\,km wide. Within this zone, a sub-horizontal band at 80--130\,km extends southward
+over about 150\,km, and a near-vertical column reaches 280\,km beneath its northern
+part. The two parts correspond to the two depth modes of the HKP domain. Section
+B--B$'$ crosses the Pamir from north-east to south-west. Its 411 hypocentres outline a
+narrower zone that deepens south-westward from about 100\,km to 200\,km. The crust
+along both sections hosts a separate shallow population, with most events above
+50\,km. Sections C--C$'$ across the Chaman fault and D--D$'$ along the Herat fault
+contain only 31 and 61 located hypocentres, all shallower than 60\,km, because most
+events in these regions carry default depths.
+
+\begin{figure}[htbp]\centering
+ 	 \includegraphics[width=0.75\textwidth]{fig_depth_histograms}
+  \caption{Hypocentral depth distributions of the four seismotectonic domains for
+  the nearest-neighbour background catalogue with default depths excluded. Solid
+  lines are Gaussian kernel-density estimates normalised to their maxima, markers on
+  the right show the median depth of each domain, and dashed lines are the two
+  components of the Gaussian mixture fitted to the Hindu Kush--Pamir
+  intermediate-depth zone. The number of events per domain is given in the legend.
+  Software used for plotting figure: Python 3.14, Matplotlib, SciPy. Data: USGS
+  ComCat; ISC-GEM. Source: authors.}
+  \label{fig:depth}
+\end{figure}
+
+\begin{figure}[htbp]\centering
+  \includegraphics[width=0.53\textwidth]{fig_depth_sections}
+  \caption{Hypocentral depth sections. (a)~Index map of 9486 USGS ComCat hypocentres
+  of magnitude 4 and above, 1900--2025, coloured by depth, with the four section
+  lines; events at the default depths of 10, 33 and 35\,km are excluded. (b)~A--A$'$
+  across the Hindu Kush; (c)~B--B$'$ across the Pamir; (d)~C--C$'$ across the Chaman
+  fault; (e)~D--D$'$ along the Herat fault. Hypocentres within 50\,km of each line are
+  coloured by depth and sized by magnitude, and SRTM15+ topography is shown above each
+  section. Software used for plotting figure: GMT 6.6.0. Data: USGS ComCat; SRTM15+.
+  Source: authors.}\label{fig:sections}
+\end{figure}
+
+\subsection{Large and Destructive Earthquakes}
+The merged catalogue contains 29 earthquakes of $M_w$ 7 and above: 12 in HKP, 6 in
+NEC, 6 in PBZ and 5 in WEST. The intermediate-depth events include those of 1909
+($M_w$ 7.7), 1921 ($M_w$ 7.8), 1949, 1965, 1983, 2002 and 2015 ($M_w$ 7.5 at
+220\,km). The crustal events include the 1935 Quetta ($M_w$ 7.6), 1956 central
+Afghanistan ($M_w$ 7.3), 1997 Zirkuh ($M_w$ 7.2), 2005 Kashmir ($M_w$ 7.6) and 2013
+Saravan ($M_w$ 7.7) earthquakes. The crustal domains together released 54.7\,\% of
+the seismic moment of 1900--2025 (\cref{tab:domains}). The destructive events of
+2022--2025 are all shallow (\cref{tab:events}). The Herat sequence comprised five
+events of $M_w$ 5.9--6.3 at 8--14\,km depth between 7 and 15 October 2023, four of
+them of $M_w$ 6.3.
+
+\begin{table}[htbp]\centering
+  \caption{Destructive earthquakes of 2022--2025 in the ComCat catalogue, with
+  origin time (UTC), epicentre, depth and moment magnitude.}
+  \label{tab:events}
+  \small
+  \begin{tabular}{lccccc}
+    \toprule
+    Event & Origin time (UTC) & Lat. ($^\circ$N) & Lon. ($^\circ$E) & Depth (km) & $M_w$ \\
+    \midrule
+    Paktika & 2022-06-21 20:54 & 33.02 & 69.46 & 4 & 6.0 \\
+    Herat (1) & 2023-10-07 06:41 & 34.60 & 61.93 & 14 & 6.3 \\
+    Herat (2) & 2023-10-07 07:12 & 34.54 & 61.89 & 8 & 6.3 \\
+    Herat (3) & 2023-10-07 07:40 & 34.63 & 62.00 & 12 & 5.9 \\
+    Herat (4) & 2023-10-11 00:41 & 34.54 & 62.05 & 8 & 6.3 \\
+    Herat (5) & 2023-10-15 03:36 & 34.65 & 62.12 & 9 & 6.3 \\
+    Kunar & 2025-08-31 19:17 & 34.71 & 70.81 & 8 & 6.0 \\
+    Kholm & 2025-11-02 20:29 & 36.55 & 67.39 & 28 & 6.2 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Focal Mechanisms and Strain}
+The Global CMT catalogue contains 886 moment tensors for 1976--2025 in the study
+region, with $M_w$ 4.6--7.6 (\cref{fig:meca}). Of these, 505 have centroids at depths of
+70\,km or less and 381 lie deeper. Thrust faulting dominates both groups. It accounts
+for 48\% of the shallow mechanisms and 71\% of the intermediate-depth ones. Strike-slip
+faulting is the second shallow style at 28\%, followed by oblique (18\%) and normal
+faulting (6\%). Below 70\,km strike-slip and normal events almost vanish (5\% and 2\%),
+and the remaining events are oblique reverse mechanisms (\cref{fig:meca}b, c).
+
+The domains differ in their mixture of styles (\cref{tab:meca}). The intermediate-depth
+zone is the most uniform: 72\% of its events are thrusts with near-horizontal P axes
+trending N165\textdegree E. The plate-boundary domain combines thrusting on the
+Sulaiman and Himalayan fronts (54\%) with strike-slip faulting along the Chaman system
+(27\%) under a N--S P axis (N173\textdegree E). The north-eastern crust has the lowest share of
+thrusts (43\%) and the highest share of normal events (8\%), with a NNW--SSE P axis
+(N151\textdegree E). The western interior has the largest strike-slip share (32\%),
+contains no normal mechanisms and is the only domain with a NE--SW P axis
+(N041\textdegree E). The P axes of shallow events
+cluster between N140\textdegree E and N010\textdegree E, and the fewest trend
+WNW--ESE, between N060\textdegree E and N100\textdegree E (\cref{fig:meca}d). Ten intermediate-depth events fall in
+crustal domains by the classifier and are excluded from their shallow statistics.
+
+\begin{figure}[htbp]\centering
+  \includegraphics[width=0.78\textwidth]{fig_focal_mechanisms}
+  \caption{Focal mechanisms of Afghanistan and its margins, 1976--2025. (a)~Global
+  CMT moment tensors as lower-hemisphere projections sized by magnitude on shaded
+  relief with USGS Quaternary faults. The 505 mechanisms at depths of 70\,km or less
+  are coloured by faulting class after \citet{Frohlich1992}; the 381
+  intermediate-depth mechanisms are shown in grey beneath them. (b, c)~Ternary
+  diagrams of the squared sines of the T-, B- and P-axis plunges for shallow and
+  intermediate-depth events. (d)~Rose diagram of P-axis azimuths of shallow events in
+  10\textdegree\ sectors, treated as axial data. Software used for plotting figure: GMT
+  6.6.0. Data: Global CMT \cite{Dziewonski1981, Ekstrom2012}; USGS OFR 2007-1103;
+  SRTM15+. Source: authors.}\label{fig:meca}
+\end{figure}
+
+\begin{table}[htbp]\centering
+  \caption{Focal-mechanism styles by seismotectonic domain (Global CMT, 1976--2025).
+  Counts are followed by percentages. Crustal domains include only events at depths of
+  70\,km or less. The mean P axis is the axial mean of the P-axis orientations, given
+  as azimuth/plunge; $C$ is the share of variance carried by the mean axis.}
+  \label{tab:meca}
+  \begin{tabular}{lrllllll}
+    \toprule
+    Domain & $N$ & Thrust & Strike-slip & Normal & Oblique & P axis & $C$ \\
+    \midrule
+    HKP & 373 & 268 (72) & 14 (4) & 5 (1) & 86 (23) & 165/11 & 0.63 \\
+    NEC & 235 & 100 (43) & 65 (28) & 18 (8) & 52 (22) & 151/00 & 0.65 \\
+    PBZ & 203 & 109 (54) & 55 (27) & 10 (5) & 29 (14) & 173/11 & 0.59 \\
+    WEST & 65 & 33 (51) & 21 (32) & 0 (0) & 11 (17) & 041/06 & 0.72 \\
+    All & 886 & 512 (58) & 159 (18) & 35 (4) & 180 (20) & 165/07 & 0.59 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Kostrov summation resolves 57 shallow cells, which hold 440 of the 505 shallow
+mechanisms, and 21 intermediate-depth cells (\cref{fig:strain}). Shallow scalar strain
+rates span four orders of magnitude, from $7.6\times10^{-11}$ to
+$2.9\times10^{-7}$\,yr$^{-1}$, with a median of $2.8\times10^{-9}$\,yr$^{-1}$
+(\cref{fig:strain}c). The fastest cell contains the 2005 Kashmir rupture
+($2.9\times10^{-7}$\,yr$^{-1}$). It is followed by one cell in the northern Pamir and
+two cells along the Sistan suture zone of eastern Iran, all of $8\times10^{-8}$ to
+$1.2\times10^{-7}$\,yr$^{-1}$. The five fastest cells carry 72\% of the summed shallow
+rate, so that crustal deformation is concentrated along the margins of Afghanistan.
+Shortening dominates 47 of the 57 shallow cells. The rate-weighted mean shortening axis
+trends N021\textdegree E, while individual cells rotate from NE--SW in the west to
+NNW--SSE in the Pamir (\cref{fig:strain}a). The interior of Afghanistan between
+62\textdegree E and 66\textdegree E has no cell with three or more mechanisms.
+
+The intermediate-depth field is more uniform. Its median rate is
+$7.4\times10^{-10}$\,yr$^{-1}$, and the five cells of the Hindu Kush nest between
+70\textdegree E and 71.5\textdegree E carry 96\% of the summed rate, with a maximum of
+$1.4\times10^{-7}$\,yr$^{-1}$ (\cref{fig:strain}b). Shortening dominates 18 of the
+21 cells, and the rate-weighted shortening axis trends N176\textdegree E with a high
+resultant length of 0.83. The Hindu Kush slab therefore shortens almost exactly N--S,
+in line with the convergence of India and Eurasia, whereas the Pamir cells farther
+north-east deform at rates lower by one to three orders of magnitude.
+
+The merged catalogue released a total seismic moment of
+$6.7\times10^{21}$\,N\,m in 1900--2025, equivalent to a single event of $M_w$ 8.5
+(\cref{fig:moment}). Release is strongly concentrated in space: the 10\,\% of the 624
+cells with the highest moment account for 93\,\% of the total, and the two cells with
+the highest values lie in the Hindu Kush nest (\cref{fig:moment}a). The HKP domain
+released 45\,\% of the total, followed by NEC (21\,\%), PBZ (19\,\%) and WEST (15\,\%)
+(\cref{tab:domains}). The timing of release differs between domains
+(\cref{fig:moment}b). The HKP and NEC domains released most of their moment before
+1960, and their curves have risen only gradually since then. In contrast, 40\,\% of
+the PBZ moment and 56\,\% of the WEST moment were released after 2000, mainly in the
+2005 Kashmir and 2013 Saravan earthquakes. The three largest events supply 43\,\% of
+the HKP moment, 57\,\% of the PBZ moment and 65\,\% of the WEST moment, so the
+long-term budget of the crustal domains rests on a few large earthquakes. The four
+destructive earthquakes of 2022--2025, of $M_w$ 6.0--6.3, together released only
+$8.6\times10^{18}$\,N\,m, or 0.13\,\% of the total. Their impact therefore reflects
+shallow depth, proximity to settlements and building vulnerability rather than the
+size of the moment release.
+
+\begin{figure}[htbp]\centering
+  \includegraphics[width=0.72\textwidth]{fig_strain_rate}
+  \caption{Seismic strain rates from Kostrov summation of Global CMT moment tensors,
+  1976--2025. (a)~Shallow events ($\le 70$\,km) in 1\textdegree\ cells over a
+  30\,km layer; the dashed frame outlines panel (b). (b)~Intermediate-depth events
+  (70--300\,km) of the Hindu Kush--Pamir zone in 0.5\textdegree\ cells over a
+  230\,km layer. Colours show the logarithm of the horizontal scalar strain rate on
+  the jet scale. Crosses show the principal horizontal strain rates normalised in each
+  cell, with inward arrows for shortening and outward arrows for extension. Only cells
+  with at least three events are shown. (c)~Distribution of cell strain rates.
+  Software used for plotting figure: GMT 6.6.0. Data: Global CMT
+  \cite{Dziewonski1981, Ekstrom2012}; SRTM15+. Source: authors.}\label{fig:strain}
+\end{figure}
+
+\begin{figure}[htbp]\centering
+  \includegraphics[width=0.64\textwidth]{fig_moment_release}
+  \caption{Seismic moment release in Afghanistan and its margins, 1900--2025.
+  (a)~Cumulative seismic moment of all events of the merged catalogue in
+  0.5\textdegree\ cells, computed as $M_0 = 10^{1.5 M_w + 9.1}$\,N\,m, on a logarithmic
+  jet scale. Stars mark the 2022 Paktika, 2023 Herat, 2025 Kunar and 2025 Kholm
+  earthquakes. (b)~Cumulative moment of each seismotectonic domain through time on a
+  logarithmic axis. Numbered circles mark the largest events, and stars mark the
+  2022--2025 destructive earthquakes on the curves of their domains. Software used for
+  plotting figure: GMT 6.6.0. Data: merged USGS ComCat and ISC-GEM catalogue
+  \cite{Storchak2013}; SRTM15+. Source: authors.}
+  \label{fig:moment}
+\end{figure}
+
+\subsection{Fault Structure and Seismicity}
+The mapped faults of Afghanistan have a total length of about 65\,700\,km
+(\cref{fig:faultdens}a). Fault density reaches 0.56\,km\,km$^{-2}$ and exceeds
+0.28\,km\,km$^{-2}$ in one-tenth of the 767 occupied cells. The densest belts follow
+the Herat fault zone, the central Afghan ranges between 64\textdegree E and
+68\textdegree E, and the Badakhshan region north of the Hindu Kush. Their strikes are
+dominantly NE--SW, with a maximum at N050--060\textdegree E (\cref{fig:faultdens}b). The
+Quaternary faults have a broader distribution with a maximum at
+N090--100\textdegree E, which reflects the E--W Herat fault and the faults of the
+north-eastern ranges (\cref{fig:faultdens}c). The nodal planes of the 103 shallow
+Global CMT mechanisms inside Afghanistan strike mainly N--S to NNE--SSW, close to the
+trend of the Chaman system and the eastern ranges (\cref{fig:faultdens}d).
+
+Shallow seismicity clusters strongly around the Quaternary faults
+(\cref{fig:faultdens}e). The 1351 epicentres shallower than 40\,km have a median
+distance of 3.5\,km to the nearest Quaternary fault, compared with 11.3\,km for 6755
+random points. Overall, 87\,\% of the epicentres lie within 10\,km of a Quaternary
+fault and 99\,\% within 25\,km, whereas the corresponding shares for random points
+are 46\,\% and 72\,\%. The two-sample Kolmogorov--Smirnov statistic is $D = 0.41$
+($p < 10^{-100}$). Epicentres also fall in cells of higher fault density, with a
+median of 0.099 against 0.064\,km\,km$^{-2}$ for random points. The interior of the
+Helmand and Farah blocks, which has few mapped Quaternary faults, records few
+instrumental earthquakes (\cref{fig:faultdens}a).
+
+\begin{figure}[htbp]\centering
+  \includegraphics[width=0.86\textwidth]{fig_fault_density}
+  \caption{Fault structure and seismicity of Afghanistan. (a)~Density of the
+  mapped faults of the USGS 1:850\,000 map (km\,km$^{-2}$) in 0.25\textdegree\ cells,
+  with USGS Quaternary faults and 1351 ComCat epicentres of magnitude 4 and above
+  shallower than 40\,km, 1900--2025. (b--d)~Length-weighted strikes of (b) mapped and
+  (c) Quaternary faults and (d) nodal-plane strikes of 103 shallow Global CMT
+  mechanisms, in 10\textdegree\ sectors normalised to the largest sector.
+  (e)~Cumulative distribution of the distance from each epicentre to the nearest
+  Quaternary fault, compared with 6755 uniformly random points inside Afghanistan.
+  Software used for plotting figure: GMT 6.6.0. Data: USGS faults of Afghanistan
+  \cite{Doebrich2006}; USGS Quaternary faults \cite{Ruleman2007}; USGS ComCat; Global
+  CMT \cite{Ekstrom2012}. Source: authors.}\label{fig:faultdens}
+\end{figure}
+
+\subsection{Recurrence and Sensitivity Analysis}
+The Gutenberg--Richter parameters give return periods of $M_w \geq 7$ events of 11
+years for HKP (95\,\% interval 7--19), 19 years for WEST (11--47), 70 years for NEC
+(31--269) and 87 years for PBZ (31--355) (\cref{fig:sensitivity}b). The observed
+numbers of such events in 1900--2025 correspond to recurrence intervals of 10.5
+years in HKP, 21 years in NEC and PBZ, and 25 years in WEST. The probability of at
+least one $M_w \geq 7$ event in 50 years is 0.99 for HKP, 0.93 for WEST (0.65--0.99),
+0.51 for NEC (0.17--0.81) and 0.44 for PBZ (0.13--0.80).
+
+\begin{figure}[htbp]\centering
+  	\includegraphics[width=0.98\textwidth]{fig_sensitivity}
+  \caption{Sensitivity of the b-values and recurrence of large earthquakes. (a)
+  b-values with Shi--Bolt standard errors for each domain under alternative
+  choices. These are the reference nearest-neighbour catalogue with $M_c = 5.5$, the
+  undeclustered and Gardner--Knopoff catalogues and the catalogue without default
+  depths. Further rows use completeness magnitudes of 5.3 and 5.8 and the
+  converted catalogue with the regional and Scordilis conversions. (b)
+  Return periods of $M_w \geq 7$ events from the Gutenberg--Richter parameters, with
+  bootstrap 95\,\% intervals (filled bars), and from the observed counts of
+  1900--2025 (hatched bars), on a logarithmic axis. Software used for plotting
+  figure: Python 3.14, Matplotlib, NumPy. Data: USGS ComCat; ISC-GEM. Source:
+  authors.}
+  \label{fig:sensitivity}
+\end{figure}
+
+The ranking of the domains is stable under the declustering and depth choices
+(\cref{fig:sensitivity}a). With Gardner--Knopoff declustering, the b-values decrease
+by 0.06--0.27 in every domain, and WEST remains the lowest at 0.64. Raising $M_c$ to
+5.8 changes the values by less than 0.13 where enough events remain. Lowering $M_c$
+to 5.3 raises all values by 0.13--0.41. Below 5.5, converted magnitudes enter the
+sample. The converted catalogue yields systematically higher b-values: 1.27--1.85
+with the Scordilis conversion and 1.03--1.85 with the regional conversion, at
+completeness magnitudes of 4.7--5.0.
+
+Taken together, the four domains differ consistently in b-value, depth, faulting
+style, strain and the timing of moment release, and their ranking holds under every
+declustering, completeness and depth choice tested. The Discussion interprets these
+contrasts in terms of the processes that produce them, examines why the shallow
+domains host the destructive earthquakes and considers what the results imply for
+disaster risk reduction in Afghanistan.
+
+% ===========================================================================
+\section{Discussion}\label{sec:discussion}
+
+\subsection{Three Seismicity Regimes and Their Tectonic Origin}
+The results define four seismotectonic domains. They group into three regimes:
+intermediate-depth seismicity beneath the Hindu Kush and Pamir, crustal deformation
+along the plate-boundary zone and the north-eastern ranges, and sparse but
+strike-slip-dominated seismicity in the western interior. \Cref{fig:synthesis}
+summarises their properties.
+The contrasts in b-value follow the state of stress and the structure of each
+domain. Laboratory experiments and global compilations show that b decreases as
+differential stress increases, so that thrust faulting yields lower b-values than
+strike-slip and normal faulting \cite{Scholz1968, Schorlemmer2005, Scholz2015}. The
+intermediate-depth zone fits this relation. Its b-value of 0.97 accompanies a
+dominance of thrust-class mechanisms and a tightly clustered N--S shortening axis.
+In a near-vertical slab, such mechanisms have steeply plunging T axes and therefore
+record down-dip stretching of the lithosphere that sinks beneath the Hindu Kush
+\cite{Zhan2016, Molnar2019, Kufner2017}. Five cells of the nest carry 96\,\% of the
+intermediate-depth strain rate, which shows that this stretching is focused in a
+small volume, as expected for the necking of a detaching slab \cite{Lister2008,
+Kufner2016, Kufner2017}. The two depth modes near 115 and 204\,km and the lowest
+gridded b-values beneath the southern tip of the slab further resolve vertical and
+lateral variations of stress within this volume \cite{Pegler1998, Sippl2013}.
+
+The north-eastern crust and the plate-boundary zone have the highest b-values,
+1.33--1.38. Both domains are structurally complex. The north-eastern crust combines
+thrusting with the largest share of normal faulting, and the plate-boundary zone
+combines thrusting on the Sulaiman and Himalayan fronts with strike-slip faulting
+along the Chaman system. Heterogeneous fault populations of this kind, together with
+the partly creeping segments of the Chaman fault \cite{Fattahi2016, Barnhart2017,
+Dalaison2021}, release strain in many moderate events relative to large ones, which
+raises b. The Kostrov field supports this interpretation. Shallow strain rates span
+four orders of magnitude and are highest along the margins of Afghanistan, where
+geodetic networks record the partitioning of India--Eurasia convergence between
+strike-slip and thrust structures \cite{Mohadjer2010, Szeliga2012}.
+
+The western interior has the lowest b-value, 0.69, although strike-slip mechanisms
+dominate it. Here the low value reflects few moderate events relative to the large
+earthquakes of 1997 Zirkuh and 2013 Saravan rather than high stress alone.
+Deformation in this domain is slow and distributed over long faults such as the
+Herat fault \cite{Wheeler2005, Ruleman2007, Walker2004}, so the instrumental window
+samples only part of its seismic cycle. The NE--SW P axis of the western interior,
+distinct from the N--S axes of the other domains, records the transfer of
+Arabia--Eurasia convergence into eastern Iran and western Afghanistan
+\cite{Vernant2004, Walker2004}. Seismicity in Afghanistan therefore reflects three
+processes: stretching of a sinking slab, partitioned shortening along the
+India--Eurasia margin and slow distributed deformation of the Afghan interior.
+
+\subsection{Destructive Crustal Earthquakes Outside the Hindu Kush Nest}
+All destructive earthquakes of 2022--2025 occurred at 4--28\,km depth in the
+crustal domains. The 2022 Paktika and 2025 Kunar events lie in the plate-boundary
+zone, the 2023 Herat sequence in the western interior and the 2025 Kholm event in
+the north-eastern crust (\cref{fig:synthesis}). Together they released only 0.13\,\%
+of the seismic moment of the study period. Their impact therefore follows from three
+factors that catalogue statistics do not capture. First, shallow hypocentres beneath
+inhabited valleys concentrate strong shaking in small epicentral areas
+\cite{Jahed2024}. Second, the adobe and stone dwellings that dominate rural housing
+collapse under moderate ground motion \cite{Akhundzadah2025, WorldBank2024}. Third,
+some sources were unknown before they ruptured. The Herat sequence broke a set of
+north-dipping blind thrusts north-west of the city of Herat in five mainshocks
+within nine days \cite{Zhao2025, Fu2025, Xu2025, Zhong2026, Toker2026}. Faults of
+this kind do not reach the surface and are absent or incomplete in the Quaternary
+fault maps.
+
+The fault test shows why this matters. Instrumental epicentres lie a median of
+3.5\,km from mapped Quaternary faults, so the mapped network captures most of the
+recorded shallow activity. The same analysis shows that the Helmand and Farah blocks,
+with few mapped faults, also record few earthquakes. A short catalogue and an
+incomplete fault map can thus agree on low activity where buried structures
+accumulate strain slowly. Experience in other slowly deforming continental regions
+shows that such areas host infrequent but damaging earthquakes, which hazard maps
+built on short catalogues tend to underestimate \cite{Stein2012, Liu2016, Calais2016,
+England2011}. In the western interior, the modelled return period of $M_w \geq 7$
+events is about two decades. Large shallow earthquakes are therefore a recurrent
+part of its behaviour, even allowing for the weight of the 2013 Saravan earthquake
+in its statistics. The destructive events of 2022--2025 are therefore not anomalies
+but a sample of the activity that the crustal domains sustain over longer periods.
+
+\begin{figure}[htbp]\centering
+  \includegraphics[width=0.74\textwidth]{fig_synthesis}
+  \caption{Synthesis of the seismicity regimes of Afghanistan. (a)~Crustal domains,
+  shaded by the majority domain of the events in each 0.5\textdegree\ cell, and the
+  footprint of the intermediate-depth domain (blue outline). Beachballs show the
+  summed Global CMT moment tensor of each domain, crosses the principal horizontal
+  strain axes from Kostrov summation and stars the destructive earthquakes of
+  2022--2025. (b)~Key statistics of each domain: b-value for $M_w \geq 5.5$ in
+  1964--2025, dominant faulting style and mean P axis, share of the seismic moment
+  released in 1900--2025, median depth and modelled return period of $M_w \geq 7$
+  events. Software used for plotting figure: GMT 6.6.0. Data: this study (merged
+  ComCat and ISC-GEM catalogue; Global CMT); SRTM15+. Source: authors.}
+  \label{fig:synthesis}
+\end{figure}
+
+\subsection{Comparison with Previous Hazard and Seismicity Studies}
+The domain b-values agree with earlier regional estimates where the data and
+methods are comparable (\cref{tab:comparison}). Drakopoulos and Srivastava
+\cite{Drakopoulos1972} obtained $b = 1.5 \pm 0.2$ for shallow and $1.2 \pm 0.2$ for
+intermediate-depth Hindu Kush earthquakes of 1963--1971 and found no decrease of b
+with depth. Rehman et al.\ \cite{Rehman2017} identified three areas with b below 0.9
+within the intermediate-depth zone. Rehman et al.\ \cite{Rehman2023} later reported
+b-values of 0.99--1.47 across the Pamir--Hindu Kush, with the lowest values in the
+Hindu Kush and the northern Pamir. The intermediate-depth value of 0.97 found here
+lies at the lower end of this range, and the low gridded values beneath the southern
+tip of the slab coincide with the low-b intermediate-depth areas mapped earlier. The
+higher values of the north-eastern crust and the plate-boundary zone agree with the
+higher shallow b-values of the earlier studies. The remaining differences in absolute
+value reflect magnitude type and threshold. The earlier studies used body-wave or
+mixed magnitudes and lower completeness magnitudes, and the sensitivity tests of
+this study show that both choices raise b (\cref{fig:sensitivity}a).
+
+The national hazard map of Afghanistan combined a catalogue of earthquakes of
+magnitude 4.5 and above since 1964, with depths to 250\,km, and the Quaternary fault
+database \cite{Boyd2007, Ruleman2007}. The present analysis complements this model
+with objectively delineated domains and with domain-specific b-values, depth
+distributions, faulting styles and strain directions. These parameters can define
+separate crustal and intermediate-depth source zones in an updated hazard model. They also
+identify the western interior as a domain whose low b-value implies a larger share
+of large earthquakes than a regional average would suggest \cite{Giardini1999,
+Silva2020}.
+
+\begin{table}[htbp]\centering
+  \caption{Comparison of b-values from this study with published estimates for the
+  Hindu Kush--Pamir region. NND, nearest-neighbour declustering; USCGS, U.S. Coast
+  and Geodetic Survey; NEIC, USGS National Earthquake Information Center.}
+  \label{tab:comparison}
+  \small
+  \begin{tabular}{>{\raggedright\arraybackslash}p{3.1cm}>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}p{1.7cm}>{\raggedright\arraybackslash}p{2.0cm}>{\raggedright\arraybackslash}p{3.8cm}}
+    \toprule
+    Study & Region and depth & Period & $b$ & Data and method \\
+    \midrule
+    Drakopoulos and Srivastava \cite{Drakopoulos1972} & Hindu Kush, 0--100\,km
+      & 1963--1971 & $1.5 \pm 0.2$ & USCGS magnitudes; least squares \\
+     & Hindu Kush, 100--200\,km & 1963--1971 & $1.2 \pm 0.2$ & as above \\
+    Rehman et al.\ \cite{Rehman2017} & Hindu Kush, 70--300\,km & to 2007
+      & $< 0.9$ in three areas & b-value maps of a declustered catalogue \\
+    Rehman et al.\ \cite{Rehman2023} & Pamir--Hindu Kush, four zones & 1949--2018
+      & 0.99--1.47 & NEIC, $M \geq 3.0$, declustered; lowest b in Hindu Kush \\
+    This study, HKP & Hindu Kush--Pamir, $\geq 70$\,km & 1964--2025
+      & $0.97 \pm 0.07$ & $M_w \geq 5.5$, NND; Aki--Utsu, Shi--Bolt \\
+    This study, NEC & North-eastern crust & 1964--2025 & $1.33 \pm 0.16$ & as above \\
+    This study, PBZ & Plate-boundary zone & 1964--2025 & $1.38 \pm 0.19$ & as above \\
+    This study, WEST & Western interior & 1964--2025 & $0.69 \pm 0.11$ & as above \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Implications for Disaster Risk Reduction in Afghanistan}
+The domain statistics translate into four priorities for the Afghanistan National
+Disaster Management Authority (ANDMA) and its partners. First, hazard zoning benefits
+from treating the shallow crustal domains separately from the Hindu Kush nest. The
+nest dominates the catalogue and the moment budget, but its depths of 150--250\,km
+spread and attenuate shaking. The crustal domains, in contrast, produced every
+lethal earthquake of 2022--2025. Separate source zones with their own b-values, depth
+distributions and faulting styles keep crustal hazard from being diluted by deep
+seismicity \cite{Boyd2007, Silva2020}. Second, the western interior and the Herat
+region merit high priority. Their low b-value and the blind-thrust ruptures of 2023
+show that large shallow earthquakes recur there although moderate events are rare.
+
+Third, building-code provisions and retrofitting of adobe and stone dwellings are
+most effective where shallow sources lie beneath dense rural settlement. Such areas
+include the Herat valley, the Kabul--Jalalabad corridor, Paktika and Khost, and the
+Kunar valley \cite{Akhundzadah2025, Ismail2016}. Fourth, preparedness planning should
+anticipate earthquake sequences. The Herat sequence produced four $M_w$ 6.3 events in
+nine days, so that shelters, damage inspection and search-and-rescue procedures must
+cope with repeated strong shaking of already weakened buildings \cite{WorldBank2024,
+Zhao2025}. Because the catalogue, scripts and maps are open, ANDMA staff and
+partner institutions can update these statistics as new earthquakes occur.
+
+\subsection{Limitations}
+The domains and their ranking are robust, but five aspects of the data bound the
+precision of the results. First, the local seismic network of Afghanistan is sparse,
+so ComCat epicentres carry errors of 10--20\,km and many crustal depths are fixed at
+default values. These errors blur the gridded statistics and the fault-distance test
+at scales below about 20\,km, and default-depth events remain in the crustal b-value
+grid. Second, the domain b-values rest on events of $M_w$ 5.5 and above since 1964,
+which limits sample sizes in the crustal domains; the gridded body-wave b-values are
+therefore read as relative contrasts. Third, converted magnitudes raise b, as the
+sensitivity tests show, so absolute values from converted catalogues are not
+directly comparable with moment-magnitude estimates. Fourth, the Global CMT
+catalogue is complete only above about $M_w$ 5, so Kostrov summation leaves the
+interior between 62\textdegree E and 66\textdegree E unresolved and captures only
+part of the deformation of slowly deforming regions. Fifth, the fault database is
+generalised at 1:850\,000 scale and omits blind structures such as those that
+ruptured near Herat. In addition, the western domain extends into eastern Iran, and
+its moment budget and recurrence are influenced by the 2013 Saravan earthquake, an
+event at about 80\,km depth beneath the Iranian side of the border.
+
+\subsection{Future Directions}
+Three lines of work follow from these results. First, a companion study will
+analyse the subsurface structure of the northern margin of the Afghan platform,
+where the 2025 Kholm earthquake occurred at 28\,km depth, using gravity, magnetic and
+topographic data to locate buried thrusts and basement faults. Second, city-scale
+scenario shaking for Herat, Kabul and Jalalabad will combine the domain parameters
+of this study with ground-motion models and building inventories to estimate damage
+for representative earthquakes. Third, denser broadband and strong-motion networks,
+operated jointly with ANDMA and regional partners, would lower completeness
+magnitudes, constrain crustal depths and allow b-values to be mapped at the scale of
+individual fault systems. Relocation of the instrumental catalogue with regional
+velocity models would sharpen the fault-distance test and the depth sections.
+
+% ===========================================================================
+\section{Conclusions}\label{sec:conclusions}
+This study compared the statistical seismicity regimes of Afghanistan using open
+data and a single reproducible workflow. Unsupervised clustering of a merged and
+declustered catalogue resolves four seismotectonic domains: the Hindu Kush--Pamir
+intermediate-depth zone, the north-eastern crust, the plate-boundary zone and the
+western interior. These domains differ systematically in b-value, depth, faulting
+style, strain and the timing of moment release.
+
+The intermediate-depth zone dominates the catalogue and the moment budget and
+records the stretching of a near-vertical slab under N--S shortening. The
+north-eastern crust and the plate-boundary zone release strain in many moderate
+events across heterogeneous fault systems, whereas the western interior has the
+lowest b-value and a NE--SW shortening direction. Shallow seismicity concentrates
+near the mapped Quaternary faults. The destructive earthquakes of recent years all
+occurred in the crust, several of them on blind thrusts, while releasing only a small
+fraction of the seismic moment.
+
+The study provides the first nationwide, domain-resolved statistical regionalisation
+of Afghan seismicity, together with open scripts and maps that partner institutions
+can reproduce. For disaster risk reduction, it supports hazard zoning that separates
+shallow crustal sources from the deep nest and gives priority to the western
+interior and to populated valleys above shallow thrusts. The main limitation is the
+reliance on teleseismic locations and magnitudes. Future work will image the buried
+faults of the northern platform margin and model scenario shaking for the major
+cities of Afghanistan.
+
+% ===========================================================================
+\section*{Data and Code Availability}
+All data used in this study are openly available: USGS ComCat
+(\url{https://earthquake.usgs.gov/earthquakes/search/}), ISC-GEM and the ISC
+Bulletin (\url{https://www.isc.ac.uk}), Global CMT (\url{https://www.globalcmt.org}),
+USGS Open-File Reports 2006-1038 and 2007-1103, PB2002, SRTM15+ and GSHHG.
+The Python and GMT scripts used for catalogue processing, statistical analysis and
+mapping are openly available on GitHub
+(\url{https://github.com/paulinelemenkova/seismotectonic-regime-partitioning}) and
+archived on Zenodo (\url{https://doi.org/10.5281/zenodo.24098106}).
+
+\section*{Funding}
+This research was supported by T\"{U}B\.{I}TAK --- B\.{I}DEB 2221 (Science
+Fellowships and Grant Programmes), grant number 2221, reference number
+B.14.2.TBT.0.06.01.02-220-859260.
+
+\section*{CRediT Author Statement}
+\textbf{Polina Lemenkova}: Conceptualization, Methodology, Software, Data curation,
+Formal analysis, Validation, Investigation, Visualization, Writing -- original draft,
+Writing -- review \& editing. \textbf{Abdullah Can Z\"{u}lfikar}: Conceptualization,
+Supervision, Project administration, Funding acquisition, Writing -- review \&
+editing.
+
+\section*{Acknowledgments}
+The authors thank the U.S. Geological Survey, the International Seismological
+Centre, the Global CMT Project and the NOAA National Centers for Environmental
+Information for providing open earthquake and fault data. They also thank the developers of
+GMT, Python, NumPy, SciPy, pandas, scikit-learn and Matplotlib. This work contributes to
+the ITU--T\.{I}KA--JICA training programme on earthquake hazard and disaster risk
+for staff of the Afghanistan National Disaster Management Authority.
+
+\section*{Conflict of Interest Statement}
+The authors declare no competing interests.
+
+% ===========================================================================
+\appendix
+\section{Code Listings}\label{secA1}
+
+The listings below give the core steps of the catalogue analysis and the map
+scripts; the complete scripts are available as described under Data and Code
+Availability.
+
+\begin{lstlisting}[style=sh,caption={GMT script for the depth-coloured
+seismicity map with depth and magnitude histograms (GMT 6.6.0; excerpt of
+fig\_catalogue\_overview.sh).},label={lst:seismap}]
+gmt grdcut @earth_relief_30s -R$R -Grelief.nc
+gmt grdgradient relief.nc -A315 -Nt0.8 -Gint.nc
+gmt makecpt -Cgray -T-14000/6000/250 > relief.cpt
+gmt makecpt -Cturbo -T0/300/10 -I -D > depth.cpt
+gmt begin fig_catalogue_overview pdf,png E300
+gmt grdimage relief.nc -Iint.nc -Crelief.cpt -R$R -J$J
+gmt coast -Di -W0.3p,gray30 -N1/0.6p,gray25,- -I1/0.35p,steelblue \
+          -C+l+gsteelblue -A50 -Bxa2f1g2 -Bya2f1g2 -BWSen
+gmt plot qf.gmt -W0.3p,gray20                     # Quaternary faults
+gmt plot af.txt -W1.4p,black                      # national border
+# colour = depth, symbol size grows with magnitude
+awk '{printf "%s %s %s %.3f\n",$1,$2,$3,0.03*exp(($4-3)*log(1.9))}' eq.txt \
+  | gmt plot -Sc -Cdepth.cpt -W0.1p,black@40
+awk '{print $1,$2}' key.txt | gmt plot -Sa0.55c -W1.2p,black -Gwhite@100
+gmt colorbar -Cdepth.cpt -DJBC+w17c/0.32c+o0/1.0c+h+ef \
+             -Bxa50f10+l"Hypocentral depth (km)"
+gmt histogram depth.txt -R0/300/1/10000 -JX7.9c/3.4cl -T10 -Gsteelblue3 \
+   -W0.3p,white -Bxa50f10+l"Depth (km)" -Bya1pf3+l"Events" -BWSne -Y-6.0c
+gmt histogram mag.txt -R3.9/8/1/10000 -JX7.9c/3.4cl -T0.1 -Gfirebrick3 \
+   -W0.3p,white -Bxa0.5f0.1+l"Magnitude" -Bya1pf3+l"Events" -BWSne -X9.1c
+gmt end
+\end{lstlisting}
+
+\begin{lstlisting}[style=sh,caption={GMT projection of hypocentres and topography
+onto the section lines and plotting of one depth section (GMT 6.6.0; excerpt of
+fig\_depth\_sections.sh).},label={lst:sections}]
+while read x0 y0 x1 y1 L; do                  # one line per section
+  gmt project eq.txt -C$x0/$y0 -E$x1/$y1 -W-$HW/$HW -Lw -Q -Fpz > sec_$L.txt
+  gmt project -C$x0/$y0 -E$x1/$y1 -G1 -Q > pts_$L.txt
+  gmt grdtrack pts_$L.txt -Grelief.nc | awk '{print $3, $4/1000}' > topo_$L.txt
+done < lines.txt
+msize() { awk '{s=0.035*1.55^($3-3); print $1, $2, $2, s}'; }
+sec() {  # L  zmax  height(cm)  yshift
+  local L=$1 ZM=$2 H=$3 YS=$4
+  local LEN=$(awk -v l=$L '$1==l{print $2}' len.txt)
+  gmt basemap -R0/$LEN/-1/7 -JX16.2c/1.0c -Y$YS -Bya3f1+l"km" -BWsen
+  awk 'NR==1{print $1,-1} {print} END{print $1,-1}' topo_$L.txt \
+    | gmt plot -G150/150/150 -W0.4p,gray20
+  gmt basemap -R0/$LEN/0/$ZM -JX16.2c/-${H}c -Y-${H}c \
+    -Bxa100f25+l"Distance along section (km)" -Bya50f25g50+l"Depth (km)" -BWSen
+  msize < sec_$L.txt | gmt plot -Sc -Cdep.cpt -W0.15p,gray20
+}
+sec A 300 4.6 -2.5c
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Frohlich classification of Global CMT mechanisms read
+from NDK records and GMT plotting of the mechanisms coloured by faulting style
+(Python 3 and GMT 6.6.0; excerpt of fig\_focal\_mechanisms.sh).},label={lst:meca}]
+for i in range(0, len(lines) - 4, 5):              # five lines per NDK event
+    l1, l2, l3, l4, l5 = lines[i:i + 5]
+    c = l3.split(); lat, lon, dep = float(c[3]), float(c[5]), float(c[7])
+    m = l4.split(); ex = int(m[0])
+    mt = [float(m[k]) for k in (1, 3, 5, 7, 9, 11)]
+    v = l5.split()
+    tpl, bpl, ppl = float(v[2]), float(v[5]), float(v[8])   # axis plunges
+    if tpl >= 50:   k = "TF"                       # thrust
+    elif ppl >= 60: k = "NF"                       # normal
+    elif bpl >= 60: k = "SS"                       # strike-slip
+    else:           k = "OB"                       # oblique
+    rows.append(dict(lon=lon, lat=lat, dep=dep, mt=mt, ex=ex, k=k))
+# --- GMT (shell): deep events grey beneath, shallow events by class
+# gmt meca meca_in_all.txt -Sm0.22c -Ggray30 -Ewhite -W0.15p,gray10
+# for k in TF NF SS OB; do
+#   eval col=\$C_$k
+#   gmt meca meca_sh_$k.txt -Sm0.38c -G$col -Ewhite -W0.25p,black
+# done
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Nearest-neighbour declustering with a Gaussian-mixture
+threshold, HDBSCAN clustering of background hypocentres, grouping of clusters into
+domains and k-nearest-neighbour labelling of all events (Python 3, scikit-learn;
+excerpt of analysis.py).},label={lst:clustering}]
+v = le[np.isfinite(le)].reshape(-1, 1)            # log10 eta of each event
+gm = GaussianMixture(2, random_state=0).fit(v)
+mu = np.sort(gm.means_.ravel())
+grid = np.linspace(mu[0], mu[1], 4000)
+lo = int(np.argmin(gm.means_.ravel()))
+pp = gm.predict_proba(grid.reshape(-1, 1))[:, lo]
+thr = float(grid[np.argmin(np.abs(pp - 0.5))])    # equal membership
+cat["nnd_bg"] = ~(le < thr)                       # background events
+
+def feats(d, w=3.0):                  # easting, northing, 3 x depth (km)
+    return np.c_[(d.longitude - 66.0) * 111.32 * np.cos(np.radians(33.0)),
+                 (d.latitude - 33.0) * 110.57, d.depth * w]
+
+bg = cat[cat.nnd_bg]
+lab = HDBSCAN(min_cluster_size=80, min_samples=20).fit_predict(feats(bg))
+
+def group(c):                                     # rules on cluster medians
+    if c["depth_med"] >= 70:
+        return "HKP"
+    if c["lon"] < 64.5:
+        return "WEST"
+    if c["lat"] < 35.2 or c["lon"] > 72.5 and c["lat"] < 36.0:
+        return "PBZ"
+    return "NEC"
+
+lab_dom = np.array([gmap.get(L, "NOISE") for L in lab])
+ok = lab_dom != "NOISE"
+knn = KNeighborsClassifier(n_neighbors=15).fit(feats(bg)[ok], lab_dom[ok])
+cat["domain"] = knn.predict(feats(cat))
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Fault-density gridding in 0.25\textdegree\ cells and
+comparison of epicentre-to-fault distances with uniformly random points by a
+two-sample Kolmogorov--Smirnov test (Python 3, NumPy, SciPy; excerpt of
+fig\_fault\_density.sh).},label={lst:faults}]
+F = pieces(read_lines("flt.gmt"))                 # midpoint lon, lat, length, azimuth
+d = 0.25; xs = np.arange(60, 75.5, d); ys = np.arange(29, 38.75, d)
+G = np.zeros((len(ys), len(xs)))
+ix = np.floor((F[:, 0] - 60) / d).astype(int)
+iy = np.floor((F[:, 1] - 29) / d).astype(int)
+ok = (ix >= 0) & (ix < len(xs)) & (iy >= 0) & (iy < len(ys))
+np.add.at(G, (iy[ok], ix[ok]), F[ok, 2])         # summed length per cell
+area = R**2 * np.radians(d) * (np.sin(np.radians(ys + d)) - np.sin(np.radians(ys)))
+G = G / area[:, None]                             # km per km^2
+
+def proj(lon, lat):                               # local equirectangular (km)
+    return np.c_[np.radians(lon - 67.5) * R * np.cos(np.radians(lat)),
+                 np.radians(lat) * R]
+
+vx = []                                           # densify faults to <= 0.5 km
+for sgm in read_lines("qf.gmt"):
+    for (x1, y1), (x2, y2) in zip(sgm[:-1], sgm[1:]):
+        L = np.hypot((x2 - x1) * 111.2 * np.cos(np.radians(y1)), (y2 - y1) * 111.2)
+        t = np.linspace(0, 1, max(2, int(np.ceil(L / 0.5)) + 1))
+        vx.append(np.c_[x1 + t * (x2 - x1), y1 + t * (y2 - y1)])
+vx = np.vstack(vx); tree = cKDTree(proj(vx[:, 0], vx[:, 1]))
+de = tree.query(proj(pe[:, 0], pe[:, 1]))[0]      # epicentres
+dr = tree.query(proj(pr[:, 0], pr[:, 1]))[0]      # random points
+ks = stats.ks_2samp(de, dr)
+\end{lstlisting}
+
+\bibliographystyle{plainnat}
+\bibliography{Bibliography}
+
+\end{document}
